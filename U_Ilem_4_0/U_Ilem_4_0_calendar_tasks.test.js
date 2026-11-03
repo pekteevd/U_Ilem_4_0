@@ -19,7 +19,7 @@ const window={
 };
 const months=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const seasons=['Зима','Весна','Лето','Осень'];
-const context={G,window,document,save(){saves++;},toast(x){messages.push(x);},prompt(){return 'Покрасить входную дверь';},months,seasons,Date,Math,Number,String,Array,Object,JSON,Set};
+const context={G,window,document,save(){saves++;},toast(x){messages.push(x);},renderTasks(){taskRenders++;},prompt(){return 'Покрасить входную дверь';},months,seasons,Date,Math,Number,String,Array,Object,JSON,Set};
 vm.runInNewContext(source,context,{filename:'U_Ilem_4_0_calendar_tasks.js'});
 const C=window.UilemCalendarTasks;
 let checks=0;
