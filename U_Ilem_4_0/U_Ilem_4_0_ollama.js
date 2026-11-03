@@ -25,6 +25,7 @@ function parsePlan(raw){
  const fence=String.fromCharCode(96).repeat(3);
  const clean=String(raw||'').trim().replace(new RegExp('^'+fence+'json'),'').replace(new RegExp('^'+fence),'').replace(new RegExp(fence+'$'),'').trim();
  try{const x=JSON.parse(clean);if(x&&typeof x==='object')return x;}catch(e){}
+ const first=clean.indexOf('{'),last=clean.lastIndexOf('}');if(first>=0&&last>first){try{const x=JSON.parse(clean.slice(first,last+1));if(x&&typeof x==='object')return x;}catch(e){}}
  return {reply:String(raw||''),tasks:[]};
 }
 function createDrafts(items){
