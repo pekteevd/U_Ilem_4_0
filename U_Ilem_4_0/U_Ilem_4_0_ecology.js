@@ -131,7 +131,8 @@ function dailyTick(){
   const s=species(p.species),before=lifeStage(p,s);
   p.ageDays=Math.max(0,Number(p.ageDays)||0)+1;
   const growthSeason=[0,.9,1,.25][season];
-  p.growth=Math.min(100,Number(p.growth||0)+(100/(s.mature*360))*growthSeason);
+  const averageSeasonalGrowth=.5375;
+  p.growth=Math.min(100,Number(p.growth||0)+(100/(s.mature*360*averageSeasonalGrowth))*growthSeason);
   const rain=/дожд|лив|гроза/i.test(weather),snow=/снег|метел/i.test(weather);
   const loss=[.2,1,2.2,.8][season]*s.water;
   p.moisture=Math.max(0,Math.min(100,Number(p.moisture||0)+(rain?16:snow?3:-loss)));
