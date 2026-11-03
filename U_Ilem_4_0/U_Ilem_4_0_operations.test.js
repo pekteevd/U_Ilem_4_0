@@ -11,7 +11,7 @@ const elements={
   defectDescription:{value:'Трещина у северного угла'},
   defectMaterials:{value:'Цемент; 2; меш.; 300'}
 };
-const G={day:4,month:5,year:1,selected:'mainHouse',cash:10000,objects:{mainHouse:{name:'Родительский дом'}},people:[{id:'d',name:'Дмитрий',hours:24,skill:4}],tasks:[],stages:[],defects:[],inspections:[],inventory:[{id:1,name:'Доска',qty:4,unit:'шт',price:100,cat:'materials'}]};
+const G={day:4,month:5,year:1,selected:'mainHouse',cash:10000,objects:{mainHouse:{name:'Родительский дом'}},people:[{id:'d',name:'Дмитрий',hours:24,skill:4}],tasks:[],stages:[],defects:[],inspections:[],inventory:[{id:1,name:'Доска',qty:4,unit:'шт',price:100,cat:'materials'},{id:2,name:'Крепёж',qty:0,unit:'шт',price:50,cat:'materials'}]};
 const document={
   getElementById(id){return elements[id]||null;},
   querySelector(){return null;},
