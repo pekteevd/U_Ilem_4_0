@@ -36,11 +36,6 @@ if not exist "%~dp0U_Ilem_4_0_lighting.js" (
     pause
     exit /b 1
 )
-if not exist "%~dp0U_Ilem_4_0_interiors.js" (
-    echo ERROR: U_Ilem_4_0_interiors.js was not found.
-    pause
-    exit /b 1
-)
 if not exist "%~dp0U_Ilem_4_0_ecology.js" (
     echo ERROR: U_Ilem_4_0_ecology.js was not found.
     pause
