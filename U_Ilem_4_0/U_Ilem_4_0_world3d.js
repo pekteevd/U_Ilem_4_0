@@ -14,12 +14,13 @@ const TYPES = {
  shower:{label:'Душ',w:2.5,d:2.5,h:2.5,wall:'#91a89b',roof:'#526b5e'},
  tree:{label:'Дерево',w:2.5,d:2.5,h:7,wall:'#765034',roof:'#557b48'},
  bench:{label:'Скамейка',w:3,d:1.2,h:1.2,wall:'#9b6638',roof:'#9b6638'},
- fire:{label:'Костровая зона',w:3,d:3,h:.5,wall:'#9a8061',roof:'#d58a42'}
+ fire:{label:'Костровая зона',w:3,d:3,h:.5,wall:'#9a8061',roof:'#d58a42'},
+ well:{label:'Колодец',w:2.5,d:2.5,h:1.8,wall:'#8c8170',roof:'#6a4a30'}
 };
 const DEFAULTS = [
  ['mainHouse','Родительский дом','house',.49,.43],['guestA','Гостевой дом','house',.29,.39],
  ['bath','Баня','bath',.61,.35],['guestB','Дом №2','house',.73,.47],
- ['garden','Сад и огород','tree',.42,.62],['well','Колодец','fire',.16,.66]
+ ['garden','Сад и огород','tree',.42,.62],['well','Колодец','well',.16,.66]
 ];
 function ensureData(){
  G.mapObjects = Array.isArray(G.mapObjects) ? G.mapObjects : [];
@@ -104,7 +105,7 @@ function install(){
    box(out,x,y,z,uw*1.06,ud*1.06,unit*.28,['#77644d','#6a5947','#74634f','#806d56','#9b876a'],o.rotation);
    box(out,x,y,unit*.28,uw,ud,Math.max(unit*.5,uh-unit*.28),[t.wall,t.wall,t.wall,t.wall,shade(hex(t.wall),1.18).map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('').replace(/^/,'#')],o.rotation);
    roof(out,x,y,uh,uw*1.12,ud*1.12,uh*.42,t.roof,o.rotation);
-   if(kind==='house'||kind==='bath'){
+   if(kind==='house'||kind==='bath'||kind==='well'){
     box(out,x+uw*.22,y-ud*.52,unit*.38,unit*.52,unit*.14,uh*.72,['#543b2a','#543b2a','#543b2a','#543b2a','#8a603d'],o.rotation);
     [-1,1].forEach(side=>box(out,x+side*uw*.24,y-ud*.535,uh*.45,unit*.48,unit*.12,unit*.48,['#514638','#514638','#514638','#514638','#9db6b1'],o.rotation));
     box(out,x-uw*.28,y+ud*.08,uh+unit*.3,unit*.35,unit*.35,unit*.9,['#8b806d','#776b5b','#827664','#938674','#a69a86'],o.rotation);
