@@ -61,7 +61,8 @@ function saveNewStage(id){
  if(!title){say('Введи название этапа.');return false;}
  const ids=(G.stages||[]).map(s=>Number(s.id)||0);
  const next=Math.max(Date.now(),0,...ids)+1;
- const stage={id:next,title,object:key,progress:0,need:[],hours:Math.max(.1,num($('ilemNewStageHours')?.value,8)),cost:Math.max(0,num($('ilemNewStageCost')?.value)),skill:Math.max(1,Math.min(5,num($('ilemNewStageSkill')?.value,1)))};
+ const need=String($('ilemNewStageMaterials')?.value||'').split(/\r?\n/).map(line=>{const m=line.match(/^(.+?)\s*:\s*(\d+(?:[.,]\d+)?)$/);return m?[m[1].trim(),Number(m[2].replace(',','.'))]:null;}).filter(Boolean);
+ const stage={id:next,title,object:key,progress:0,need,hours:Math.max(.1,num($('ilemNewStageHours')?.value,8)),cost:Math.max(0,num($('ilemNewStageCost')?.value)),skill:Math.max(1,Math.min(5,num($('ilemNewStageSkill')?.value,1)))};
  G.stages.push(stage);
  if(typeof log==='function')log('Создан этап «'+title+'» для объекта «'+objectName(key)+'».');
  save();if(typeof closeModal==='function')closeModal();if(typeof render==='function')render();
