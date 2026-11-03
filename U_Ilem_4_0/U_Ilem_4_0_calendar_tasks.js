@@ -99,7 +99,9 @@ function createTask(){
 function saveNewTask(){
  const val=id=>$(id)?.value??'',title=String(val('ilemNewTaskTitle')).trim();if(!title){tell('Введи название задачи.');return false;}
  const resources=String(val('ilemNewTaskResources')).split(/\r?\n/).map(line=>{const m=line.match(/^(.+?)\s*:\s*(\d+(?:[.,]\d+)?)$/);return m?{name:m[1].trim(),qty:Number(m[2].replace(',','.'))}:null;}).filter(Boolean);
- const task={id:nextId(),title,description:String(val('ilemNewTaskDescription')),notes:String(val('ilemNewTaskDescription')),person:String(val('ilemNewTaskPerson'))||'Не назначен',responsible:String(val('ilemNewTaskResponsible'))||String(val('ilemNewTaskPerson'))||'Не назначен',object:String(val('ilemNewTaskObject'))||null,dueDate:String(val('ilemNewTaskDue')).trim()||null,priority:String(val('ilemNewTaskPriority'))||'Плановый',hours:Math.max(0,num(val('ilemNewTaskHours'),1)),stageId:String(val('ilemNewTaskStage'))||null,resources,materials:resources.map(x=>[x.name,x.qty]),status:'На согласовании',source:'Календарь · пользовательская задача',actions:[],purchases:[],calendarKey:'calendar:custom:'+year()+':'+month()+':'+title.toLowerCase(),calendarMonth:month(),calendarYear:year(),calendarSeason:season(),createdAt:date()};
+ const object=String(val('ilemNewTaskObject'))||null,stageId=String(val('ilemNewTaskStage'))||null,linkedStage=stageId&&(G.stages||[]).find(s=>String(s.id)===stageId);
+ if(stageId&&(!linkedStage||String(linkedStage.object)!==String(object))){tell('Выбранный этап относится к другому объекту. Выбери связанный объект.');return false;}
+ const task={id:nextId(),title,description:String(val('ilemNewTaskDescription')),notes:String(val('ilemNewTaskDescription')),person:String(val('ilemNewTaskPerson'))||'Не назначен',responsible:String(val('ilemNewTaskResponsible'))||String(val('ilemNewTaskPerson'))||'Не назначен',object,dueDate:String(val('ilemNewTaskDue')).trim()||null,priority:String(val('ilemNewTaskPriority'))||'Плановый',hours:Math.max(0,num(val('ilemNewTaskHours'),1)),stageId,resources,materials:resources.map(x=>[x.name,x.qty]),status:'На согласовании',source:'Календарь · пользовательская задача',actions:[],purchases:[],calendarKey:'calendar:custom:'+year()+':'+month()+':'+title.toLowerCase(),calendarMonth:month(),calendarYear:year(),calendarSeason:season(),createdAt:date()};
  if(G.tasks.some(t=>t.calendarKey===task.calendarKey)){tell('Такая задача уже есть в плане месяца.');return false;}
  G.tasks.push(task);save();if(typeof window.closeModal==='function')window.closeModal();refresh();tell('Задача создана и добавлена на общую доску.');return task.id;
 }
@@ -127,7 +129,7 @@ function openTaskReview(id){
  const statuses=['На согласовании','Запланирована','В работе','Отложена','Выполнена','Отклонена'];
  const statusHtml=statuses.map(x=>'<option'+(String(t.status||'На согласовании')===x?' selected':'')+'>'+x+'</option>').join('');
  const stages=(G.stages||[]).map(s=>'<option value="'+h(String(s.id))+'"'+(String(t.stageId||'')===String(s.id)?' selected':'')+'>'+h(s.title)+' · '+h(objectNameForTask(s.object))+'</option>').join('');
- const resourceText=(t.resources||t.materials||[]).map(x=>Array.isArray(x)?x[0]+': '+x[1]:x.name+': '+x.qty).join('\n');
+ const resourceText=((t.resources&&t.resources.length)?t.resources:(t.materials||[])).map(x=>Array.isArray(x)?x[0]+': '+x[1]:x.name+': '+x.qty).join('\n');
  const participants=(G.people||[]).map(p=>'<option value="'+h(p.name)+'"'+((t.participants||[]).includes(p.name)?' selected':'')+'>'+h(p.name)+'</option>').join('');
  const dateValue=String(t.dueDate||'');
  const html='<h2>Задача</h2><p class="muted">Единая запись задачи. Изменения здесь отражаются в календаре и общей доске.</p>'+
@@ -151,10 +153,13 @@ function saveTaskReview(id){
  const t=G.tasks.find(x=>String(x.id)===String(id));if(!t)return false;
  const value=id=>$(id)?.value??'';
  const title=String(value('ilemTaskTitle')).trim();if(!title){tell('У задачи должно быть название.');return false;}
+ const nextObject=String(value('ilemTaskObject'))||null,nextStageId=String(value('ilemTaskStage'))||null;
+ const linkedStage=nextStageId&&(G.stages||[]).find(s=>String(s.id)===nextStageId);
+ if(nextStageId&&(!linkedStage||String(linkedStage.object)!==String(nextObject))){tell('Выбранный этап относится к другому объекту. Сначала выбери правильный объект.');return false;}
  t.title=title;t.description=String(value('ilemTaskDescription'));t.notes=t.description;
- t.object=String(value('ilemTaskObject'))||null;t.person=String(value('ilemTaskPerson'))||'Не назначен';t.responsible=String(value('ilemTaskResponsible'))||t.person;
+ t.object=nextObject;t.person=String(value('ilemTaskPerson'))||'Не назначен';t.responsible=String(value('ilemTaskResponsible'))||t.person;
  t.dueDate=String(value('ilemTaskDue')).trim()||null;t.priority=String(value('ilemTaskPriority'))||'Плановый';
- t.stageId=String(value('ilemTaskStage'))||null;
+ t.stageId=nextStageId;
  const participantEl=$('ilemTaskParticipants');t.participants=participantEl?Array.from(participantEl.selectedOptions).map(x=>x.value):[];
  t.resources=String(value('ilemTaskResources')).split(/\r?\n/).map(line=>{const m=line.match(/^(.+?)\s*:\s*(\d+(?:[.,]\d+)?)$/);return m?{name:m[1].trim(),qty:Number(m[2].replace(',','.'))}:null;}).filter(Boolean);t.materials=t.resources.map(x=>[x.name,x.qty]);
  t.status=String(value('ilemTaskStatus'))||'На согласовании';t.hours=Math.max(0,num(value('ilemTaskHours'),1));
