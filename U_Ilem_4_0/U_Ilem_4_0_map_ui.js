@@ -8,6 +8,26 @@ const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 function say(s){if(typeof toast==='function')toast(s);}
 function showModal(html){if(typeof window.modal==='function')window.modal(html);else if(typeof modal==='function')modal(html);}
 function objectName(id){return G.objects&&G.objects[id]?G.objects[id].name:String(id||'Объект');}
+function ensureMapControls(){
+ const scene=$('scene');if(!scene)return false;
+ let box=$('plotControls');
+ if(!box){
+  box=document.createElement('div');box.id='plotControls';box.className='plot-tools';
+  box.innerHTML='<button type="button">＋ Строить · участок 2</button><button type="button">＋ Строить · участок 3</button>';
+  scene.appendChild(box);
+ }
+ let buttons=box.querySelectorAll?box.querySelectorAll('button'):[];
+ if(!buttons.length){
+  box.innerHTML='<button type="button">＋ Строить · участок 2</button><button type="button">＋ Строить · участок 3</button>';
+  buttons=box.querySelectorAll?box.querySelectorAll('button'):[];
+ }
+ buttons.forEach(button=>{
+  const match=String(button.textContent||'').match(/участок\s*(\d+)/i);
+  const plot=match?Number(match[1]):null;
+  if(plot)button.onclick=function(e){if(e&&e.preventDefault)e.preventDefault();if(typeof window.choosePlot==='function')window.choosePlot(plot);};
+ });
+ return buttons.length>0;
+}
 function objectStages(id){return (G.stages||[]).filter(s=>String(s.object)===String(id));}
 function openObjectStages(id){
  const key=String(id||G.selected||'');
@@ -63,6 +83,7 @@ function showObjectWorks(id){
 }
 function showAllWorks(){G.objectTasksFilter=null;if(typeof window.renderWorkspace==='function')window.renderWorkspace();}
 let allowObjectFilter=false;
+ensureMapControls();
 const previousWorkspace=window.renderWorkspace;
 window.renderWorkspace=function(){
  if(G.tab==='build'&&G.objectTasksFilter){renderObjectWorks(G.objectTasksFilter);return;}
