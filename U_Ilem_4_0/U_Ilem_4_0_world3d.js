@@ -14,6 +14,7 @@ const TYPES = {
  shower:{label:'Душ',w:2.5,d:2.5,h:2.5,wall:'#91a89b',roof:'#526b5e'},
  tree:{label:'Дерево',w:2.5,d:2.5,h:7,wall:'#765034',roof:'#557b48'},
  bench:{label:'Скамейка',w:3,d:1.2,h:1.2,wall:'#9b6638',roof:'#9b6638'},
+ table:{label:'Садовый стол',w:3,d:2,h:1.5,wall:'#9b6638',roof:'#9b6638'},
  fire:{label:'Костровая зона',w:3,d:3,h:.5,wall:'#9a8061',roof:'#d58a42'},
  well:{label:'Колодец',w:2.5,d:2.5,h:1.8,wall:'#8c8170',roof:'#6a4a30'}
 };
@@ -52,7 +53,7 @@ function install(){
  tools.innerHTML='<button type="button" data-mode="select">↖ Выбор</button><select id="uilemObjectType" aria-label="Тип объекта"><option value="house">Дом</option><option value="bath">Баня</option><option value="shed">Хозблок</option><option value="greenhouse">Теплица</option><option value="gazebo">Беседка</option><option value="toilet">Туалет</option><option value="shower">Душ</option><option value="tree">Дерево</option><option value="bench">Скамейка</option><option value="fire">Костровая зона</option><option value="well">Колодец</option></select><button type="button" data-mode="place">＋ Разместить</button><button type="button" data-mode="move">↔ Переместить</button><button type="button" data-action="rotate">↻ Повернуть</button><button type="button" data-action="scaleUp">＋ Размер</button><button type="button" data-action="scaleDown">－ Размер</button><button type="button" data-action="edit">⚙ Параметры</button>';
  let style=$('uilemWorldStyle');
  if(!style){style=document.createElement('style');style.id='uilemWorldStyle';style.textContent=
- '#scene.uilem-world{isolation:isolate;touch-action:pan-y}#scene.uilem-world>img{width:100%;height:100%;object-fit:cover;animation:none!important}#uilemWorldCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;display:block;touch-action:none}#uilemWorldTools{z-index:8;left:8px;bottom:8px;right:8px;align-items:center}#uilemWorldTools select{max-width:130px;border-radius:8px;padding:7px;background:#f3e6ca;color:#392a1b;border:1px solid #947044}#uilemWorldTools button{font-size:11px;padding:7px 9px}#scene:after{pointer-events:none!important;animation:none!important}';document.head.appendChild(style);}
+ '#scene.uilem-world{isolation:isolate;touch-action:pan-y}#scene.uilem-world>img{width:100%;height:100%;object-fit:cover;animation:none!important}#uilemWorldCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;display:block;touch-action:none}#uilemWorldTools{z-index:8;left:8px;bottom:8px;right:8px;align-items:center}#uilemWorldTools select{max-width:130px;border-radius:8px;padding:7px;background:#f3e6ca;color:#392a1b;border:1px solid #947044}#uilemWorldTools button{font-size:11px;padding:7px 9px}#scene:after{pointer-events:none!important;animation:none!important}.eco-map-layer,.u4p-map-layer{display:none!important}';document.head.appendChild(style);}
  const gl=canvas.getContext('webgl',{alpha:true,antialias:true});
  if(!gl){canvas.style.display='none';if(tools)tools.remove();console.error('WebGL недоступен: оставлена исходная карта с обычным управлением');return;}
  const vertex='attribute vec2 p;attribute vec4 c;varying vec4 v;void main(){gl_Position=vec4(p,0.0,1.0);v=c;}';
@@ -113,13 +114,24 @@ function install(){
   } else {
    box(out,x,y,z,uw,ud,uh,[t.wall,t.wall,t.wall,t.wall,shade(hex(t.wall),1.18).map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('').replace(/^/,'#')],o.rotation);
   }
-  if(normalizeType(o.type)==='bench'){
+  if(normalizeType(o.type)==='bench'||normalizeType(o.type)==='table'){
    box(out,x,y,z+.7*s,uw,ud*.28,.22*unit,['#71472b','#805432','#71472b','#805432','#a06d3e'],o.rotation);
    box(out,x,y,z+.25*s,uw*.9,ud*.22,.18*unit,['#71472b','#805432','#71472b','#805432','#a06d3e'],o.rotation);
   }
   if(normalizeType(o.type)==='fire'){/* open firepit geometry is intentionally low */ }
  }
+ function syncAuxiliaryObjects(){
+  const known=new Set(G.mapObjects.map(o=>String(o.id)));
+  (G.buildings||[]).forEach(b=>{if(!known.has(String(b.id))){G.mapObjects.push({id:String(b.id),name:b.name||b.type,type:normalizeType(b.type),x:clamp(num(b.x,50)/100,.02,.98),y:clamp(num(b.y,50)/100,.02,.98),rotation:0,scale:1,source:'building'});known.add(String(b.id));}});
+  const placed=G.production&&Array.isArray(G.production.placed)?G.production.placed:[];
+  placed.forEach(p=>{const id='production_'+p.id;let o=G.mapObjects.find(x=>String(x.id)===id);if(!o){o={id,name:p.name||'Изделие мастерской',type:p.recipeId==='gardenTable'?'table':'bench',x:clamp(num(p.x)/100,.02,.98),y:clamp(num(p.y)/100,.02,.98),rotation:0,scale:1,source:'production'};G.mapObjects.push(o);}else{o.x=clamp(num(p.x)/100,.02,.98);o.y=clamp(num(p.y)/100,.02,.98);o.name=p.name||o.name;}});
+  const plants=G.garden&&Array.isArray(G.garden.livingPlants)?G.garden.livingPlants:[];const activePlantIds=new Set();
+  plants.filter(p=>p&&p.status!=='Удалено'&&p.mapX!==null&&p.mapX!==undefined&&p.mapY!==null&&p.mapY!==undefined).forEach(p=>{const id='plant_'+p.id;activePlantIds.add(id);let o=G.mapObjects.find(x=>String(x.id)===id);if(!o){o={id,name:p.name||p.species||'Растение',type:'tree',x:clamp(num(p.mapX)/100,.02,.98),y:clamp(num(p.mapY)/100,.02,.98),rotation:0,scale:.72,source:'ecology'};G.mapObjects.push(o);}else{o.x=clamp(num(p.mapX)/100,.02,.98);o.y=clamp(num(p.mapY)/100,.02,.98);}});
+  G.mapObjects=G.mapObjects.filter(o=>o.source!=='ecology'||activePlantIds.has(String(o.id)));
+ }
  function draw(){
+  syncAuxiliaryObjects();
+  if(!drag&&G.selected&&String(selected)!==String(G.selected))selected=String(G.selected);
   const rect=scene.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
   W=rect.width;H=rect.height;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);gl.viewport(0,0,canvas.width,canvas.height);
   gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
