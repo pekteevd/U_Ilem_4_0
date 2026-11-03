@@ -234,7 +234,7 @@ async function handler(req, res) {
             detail: error.message
           });
         }
-        const approvedMap = approvedMapPage.match(/<img\\b[^>]*id="map"[^>]*src="(data:image\\/png;base64,[^"]+)"/i);
+        const approvedMap = approvedMapPage.match(/<img\b[^>]*id="map"[^>]*src="(data:image\/png;base64,[^"]+)"/i);
         const sceneStart = html.indexOf('id="scene"');
         const sceneImageStart = sceneStart >= 0 ? html.indexOf('<img', sceneStart) : -1;
         const sceneSrcStart = sceneImageStart >= 0 ? html.indexOf('src="data:image/png;base64,', sceneImageStart) : -1;
