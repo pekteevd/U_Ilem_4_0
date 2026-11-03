@@ -53,13 +53,13 @@ window.editDefect=function(id){
  const d=arr('defects').find(x=>String(x.id)===String(id));if(!d)return;
  window.editingDefectId=d.id;
  const opts=['Низкая','Средняя','Высокая','Критическая'].map(x=>'<option '+(d.severity===x?'selected':'')+'>'+x+'</option>').join('');
- const materials=(d.materials||[]).map(m=>[m.name,m.qty,m.unit,m.price].join('; ')).join('\\n');
+ const materials=(d.materials||[]).map(m=>[m.name,m.qty,m.unit,m.price].join('; ')).join('\n');
  modal('<h2>Изменить дефект</h2><label class="field">Что обнаружено<input id="defectTitle" value="'+esc(d.title)+'"></label><label class="field">Серьёзность<select id="defectSeverity">'+opts+'</select></label><label class="field">Описание и место<textarea id="defectDescription" rows="3">'+esc(d.description||'')+'</textarea></label><label class="field">Материалы (строка: название; количество; ед.; цена)<textarea id="defectMaterials" rows="3">'+esc(materials)+'</textarea></label><div class="actions"><button onclick="closeModal()">Отмена</button><button onclick="saveDefect()">Сохранить изменения</button></div>');
 };
 window.saveDefect=function(){
  const title=(byId('defectTitle')&&byId('defectTitle').value||'').trim();if(!title)return say('Опиши обнаруженный дефект.');
  const raw=byId('defectMaterials')&&byId('defectMaterials').value||'';
- const materials=raw.split(/\\r?\\n/).map(x=>x.split(';')).filter(x=>x[0]&&Number(x[1])>0).map(x=>({name:x[0].trim(),qty:Number(x[1]),unit:(x[2]||'шт').trim(),price:Math.max(0,Number(x[3])||0)}));
+ const materials=raw.split(/\r?\n/).map(x=>x.split(';')).filter(x=>x[0]&&Number(x[1])>0).map(x=>({name:x[0].trim(),qty:Number(x[1]),unit:(x[2]||'шт').trim(),price:Math.max(0,Number(x[3])||0)}));
  const values={title,severity:byId('defectSeverity')&&byId('defectSeverity').value||'Средняя',description:(byId('defectDescription')&&byId('defectDescription').value||'').trim(),materials};
  const editing=window.editingDefectId;
  if(editing!=null){
