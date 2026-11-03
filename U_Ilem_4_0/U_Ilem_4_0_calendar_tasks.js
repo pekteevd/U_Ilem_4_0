@@ -13,6 +13,7 @@ const JOBS={
  'Осень':['Сбор и переработка урожая','Подготовка сада к зиме','Заготовка топлива и утепление','Консервация сезонных систем']
 };
 const $=id=>document.getElementById(id);
+const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const h=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const month=()=>Math.max(1,Number(G.month)||1);
 const year=()=>Math.max(1,Number(G.year)||1);
