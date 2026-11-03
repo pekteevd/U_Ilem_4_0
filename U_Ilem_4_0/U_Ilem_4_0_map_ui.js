@@ -100,19 +100,19 @@ const previousRenderObject=window.renderObject;
 if(typeof previousRenderObject==='function')window.renderObject=function(){
  previousRenderObject.apply(this,arguments);
  const box=$('objectDetail');if(!box)return;
- const buttons=box.querySelectorAll?box.querySelectorAll('button'):[];
- for(const button of buttons){
-  if(String(button.textContent||'').trim()==='Все работы'){
-   button.onclick=function(e){if(e&&e.preventDefault)e.preventDefault();showObjectWorks(G.selected);};
-   break;
-  }
- }
  const linked=(G.tasks||[]).filter(t=>String(t.object)===String(G.selected));
  if(linked.length){
   const active=linked.filter(t=>['На согласовании','Запланирована','В работе','Отложена'].includes(t.status));
   const done=linked.filter(t=>t.status==='Выполнена');
   const latest=active[active.length-1];
   box.innerHTML+='<div class="tile object-task-summary"><small>Связанные задачи</small><b>'+active.length+' активных · '+done.length+' завершённых</b>'+(latest?'<p class="small">'+esc(latest.title)+' · '+esc(latest.status)+'</p>':'')+'</div>';
+ }
+ const buttons=box.querySelectorAll?box.querySelectorAll('button'):[];
+ for(const button of buttons){
+  if(String(button.textContent||'').trim()==='Все работы'){
+   button.onclick=function(e){if(e&&e.preventDefault)e.preventDefault();showObjectWorks(G.selected);};
+   break;
+  }
  }
 };
 window.openStage=openObjectStages;
