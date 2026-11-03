@@ -114,6 +114,62 @@ function render(){
   '<div class="actions"><button onclick="ilemCreateCalendarTask()">＋ Своя задача</button><button onclick="nextMonth()">Завершить месяц →</button></div>'+
   '<p class="small">Добавленная рекомендация исчезает из списка предложений и остаётся одной записью в календаре и общей доске задач.</p>';
 }
+
+function openTaskReview(id){
+ const t=G.tasks.find(x=>String(x.id)===String(id));if(!t){tell('Задача не найдена.');return false;}
+ const objects=Object.entries(G.objects||{}).map(([key,o])=>'<option value="'+h(key)+'"'+(String(t.object||'')===String(key)?' selected':'')+'>'+h(o.name||key)+'</option>').join('');
+ const people=(G.people||[]).map(p=>'<option value="'+h(p.name)+'"'+(String(t.person||'')===String(p.name)?' selected':'')+'>'+h(p.name)+'</option>').join('');
+ const statuses=['На согласовании','Запланирована','В работе','Отложена','Выполнена','Отклонена'];
+ const statusHtml=statuses.map(x=>'<option'+(String(t.status||'На согласовании')===x?' selected':'')+'>'+x+'</option>').join('');
+ const dateValue=String(t.dueDate||'');
+ const html='<h2>Задача</h2><p class="muted">Единая запись задачи. Изменения здесь отражаются в календаре и общей доске.</p>'+
+ '<label class="field">Название<input id="ilemTaskTitle" value="'+h(t.title||'')+'"></label>'+
+ '<label class="field">Описание<textarea id="ilemTaskDescription" rows="3">'+h(t.description||t.notes||'')+'</textarea></label>'+
+ '<div class="grid2"><label class="field">Объект<select id="ilemTaskObject"><option value="">Без привязки</option>'+objects+'</select></label>'+
+ '<label class="field">Исполнитель<select id="ilemTaskPerson">'+people+'</select></label>'+
+ '<label class="field">Срок<input id="ilemTaskDue" type="text" placeholder="день.месяц.год" value="'+h(dateValue)+'"></label>'+
+ '<label class="field">Приоритет<select id="ilemTaskPriority">'+['Низкий','Плановый','Высокий','Срочный'].map(x=>'<option'+(String(t.priority||'Плановый')===x?' selected':'')+'>'+x+'</option>').join('')+'</select></label>'+
+ '<label class="field">Статус<select id="ilemTaskStatus">'+statusHtml+'</select></label>'+
+ '<label class="field">Трудоёмкость, ч<input id="ilemTaskHours" type="number" min="0" step="0.5" value="'+Math.max(0,num(t.hours,1))+'"></label></div>'+
+ '<div class="actions"><button onclick="closeModal()">Закрыть</button><button onclick="ilemSaveTaskReview(\''+h(String(t.id))+'\')">Сохранить изменения</button></div>';
+ if(typeof window.modal==='function')window.modal(html);else if(typeof modal==='function')modal(html);
+ return true;
+}
+function saveTaskReview(id){
+ const t=G.tasks.find(x=>String(x.id)===String(id));if(!t)return false;
+ const value=id=>$(id)?.value??'';
+ const title=String(value('ilemTaskTitle')).trim();if(!title){tell('У задачи должно быть название.');return false;}
+ t.title=title;t.description=String(value('ilemTaskDescription'));t.notes=t.description;
+ t.object=String(value('ilemTaskObject'))||null;t.person=String(value('ilemTaskPerson'))||'Не назначен';
+ t.dueDate=String(value('ilemTaskDue')).trim()||null;t.priority=String(value('ilemTaskPriority'))||'Плановый';
+ t.status=String(value('ilemTaskStatus'))||'На согласовании';t.hours=Math.max(0,num(value('ilemTaskHours'),1));
+ t.updatedAt=date();save();if(typeof window.closeModal==='function')window.closeModal();
+ renderBoard();if(G.tab==='calendar')render();if(typeof window.renderTasks==='function')window.renderTasks();
+ if(typeof window.renderObject==='function')window.renderObject();
+ tell('Задача сохранена.');return true;
+}
+function renderBoard(){
+ const el=$('liveTasks');if(!el)return;
+ const tasks=G.tasks.slice().sort((a,b)=>Number(b.createdAtMs||b.id||0)-Number(a.createdAtMs||a.id||0));
+ el.innerHTML=tasks.length?tasks.map(t=>{
+  const object=t.object&&G.objects&&G.objects[t.object]?G.objects[t.object].name:'Без объекта';
+  return '<div class="taskline"><b>'+h(t.title)+'</b><div class="taskmeta"><span class="badge">'+h(t.person||'Не назначен')+'</span><span class="badge">'+h(t.status||'На согласовании')+'</span><span class="badge">'+h(t.priority||'Плановый')+'</span><span class="badge">'+h(object)+'</span></div>'+
+  '<div class="actions"><button onclick="openTaskReview(\''+h(String(t.id))+'\')">Открыть / изменить</button>'+
+  (t.status==='На согласовании'?'<button onclick="ilemSetTaskStatus(\''+h(String(t.id))+'\',\'Запланирована\')">Утвердить</button>':'')+
+  (t.status==='Запланирована'||t.status==='Отложена'?'<button onclick="ilemSetTaskStatus(\''+h(String(t.id))+'\',\'В работе\')">Начать</button>':'')+
+  (t.status==='В работе'?'<button onclick="ilemSetTaskStatus(\''+h(String(t.id))+'\',\'Выполнена\')">Завершить</button>':'')+
+  (t.status==='Выполнена'?'<button onclick="ilemSetTaskStatus(\''+h(String(t.id))+'\',\'Запланирована\')">Открыть повторно</button>':'')+
+  '</div></div>';
+ }).join(''):'<p class="muted">Пока нет поручений. Создай задачу через календарь или командный чат.</p>';
+}
+function setTaskStatus(id,status){
+ const t=G.tasks.find(x=>String(x.id)===String(id));if(!t)return false;
+ t.status=status;t.updatedAt=date();if(status==='Выполнена')t.doneAt=date();if(status==='Запланирована')t.doneAt=null;
+ save();renderBoard();if(G.tab==='calendar')render();if(typeof window.renderTasks==='function')window.renderTasks();
+ if(typeof window.renderObject==='function')window.renderObject();
+ tell('Статус задачи: '+status+'.');return true;
+}
+
 migrateLegacy();
 const previousWorkspace=window.renderWorkspace;
 window.renderWorkspace=function(){
@@ -123,6 +179,12 @@ window.renderWorkspace=function(){
 window.ilemAddCalendarTask=addTask;
 window.ilemRemoveCalendarTask=removeTask;
 window.ilemCreateCalendarTask=createTask;
+window.openTaskReview=openTaskReview;
+window.ilemSaveTaskReview=saveTaskReview;
+window.ilemSetTaskStatus=setTaskStatus;
+window.renderLiveTasks=renderBoard;
+window.approveTask=id=>setTaskStatus(id,'Запланирована');
+window.dropTask=id=>setTaskStatus(id,'Отклонена');
 const previousApprove=window.ilemApproveTask;
 if(typeof previousApprove==='function')window.ilemApproveTask=function(id){const result=previousApprove(id);if(G.tab==='calendar')render();return result;};
 const previousReject=window.ilemRejectTask;
