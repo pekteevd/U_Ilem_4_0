@@ -93,7 +93,7 @@ window.ilemShowObjectWorks=showObjectWorks;
 window.ilemShowAllWorks=showAllWorks;
 const style=document.createElement('style');
 style.id='uilem-map-visual-cleanup';
-style.textContent='.scene:after{animation:none!important;background:linear-gradient(180deg,#14241412,#13211500 55%,#14241422)!important}';
+style.textContent='.scene:after{animation:none!important;background-size:100% 100%!important;background:linear-gradient(180deg,#14241412,#13211500 55%,#14241422)!important}';
 document.head.appendChild(style);
 window.UilemMapUI={openObjectStages,openStageDetails,createStageForm,saveNewStage,showObjectWorks,showAllWorks};
 })();
