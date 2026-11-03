@@ -27,7 +27,7 @@ window.renderInspectionWorkspace=function(){
  const defects=arr('defects').filter(x=>String(x.objectId)===String(key)).slice().reverse();
  const opts=Object.keys(objects).map(k=>'<option value="'+esc(k)+'" '+(k===key?'selected':'')+'>'+esc(objects[k].name)+'</option>').join('');
  const inspectRows=inspections.length?inspections.map(x=>'<div class="tile"><b>'+esc(x.title||'Осмотр')+'</b><p class="small">'+esc(x.date)+' · '+esc(x.inspector||'Не указан')+'</p><p>'+esc(x.notes||'Без замечаний')+'</p></div>').join(''):'<p class="muted">Осмотров пока нет.</p>';
- const defectRows=defects.length?defects.map(d=>'<div class="tile defect-card"><b>'+esc(d.title)+'</b><div class="taskmeta"><span class="badge">'+esc(d.severity)+'</span><span class="badge">'+esc(d.status)+'</span><span class="badge">'+esc(d.date)+'</span></div><p>'+esc(d.description||'')+'</p><p class="small">Материалы: '+(d.materials||[]).map(m=>esc(m.name)+' · '+esc(m.qty)+' '+esc(m.unit)).join(', ')+'</p><div class="actions">'+(d.taskId?'<span class="small">Задача №'+esc(d.taskId)+' на общей доске</span>':'<button onclick="createTaskFromDefect('+Number(d.id)+')">Создать задачу</button>')+(d.status!=='Устранён'?'<button onclick="closeDefect('+Number(d.id)+')">Отметить устранённым</button>':'')+'</div></div>').join(''):'<p class="muted">Дефекты не зафиксированы.</p>';
+ const defectRows=defects.length?defects.map(d=>'<div class="tile defect-card"><b>'+esc(d.title)+'</b><div class="taskmeta"><span class="badge">'+esc(d.severity)+'</span><span class="badge">'+esc(d.status)+'</span><span class="badge">'+esc(d.date)+'</span></div><p>'+esc(d.description||'')+'</p><p class="small">Материалы: '+(d.materials||[]).map(m=>esc(m.name)+' · '+esc(m.qty)+' '+esc(m.unit)).join(', ')+'</p><div class="actions">'+'<button onclick="editDefect('+Number(d.id)+')">Изменить</button>'+(d.taskId?'<span class="small">Задача №'+esc(d.taskId)+' на общей доске</span>':'<button onclick="createTaskFromDefect('+Number(d.id)+')">Создать задачу</button>')+(d.status!=='Устранён'?'<button onclick="closeDefect('+Number(d.id)+')">Отметить устранённым</button>':'')+'</div></div>').join(''):'<p class="muted">Дефекты не зафиксированы.</p>';
  root.innerHTML='<h3>Осмотр и дефекты · '+esc(object.name)+'</h3><label class="field">Объект<select onchange="selectInspectionObject(this.value)">'+opts+'</select></label>'+
  '<div class="actions"><button onclick="openInspectionForm()">＋ Зафиксировать осмотр</button><button onclick="openDefectForm()">＋ Добавить дефект</button></div>'+
  '<h3>История осмотров</h3>'+inspectRows+'<h3>Зафиксированные дефекты</h3>'+defectRows;
@@ -44,15 +44,29 @@ window.saveInspection=function(){
  saveAll();if(typeof closeModal==='function')closeModal();window.renderInspectionWorkspace();
 };
 window.openDefectForm=function(){
+ window.editingDefectId=null;
  const name=G.objects&&G.objects[G.selected]&&G.objects[G.selected].name||'Объект';
  const html='<h2>Новый дефект · '+esc(name)+'</h2><label class="field">Что обнаружено<input id="defectTitle" placeholder="Например, протекает кровля"></label><label class="field">Серьёзность<select id="defectSeverity"><option>Низкая</option><option selected>Средняя</option><option>Высокая</option><option>Критическая</option></select></label><label class="field">Описание и место<textarea id="defectDescription" rows="3"></textarea></label><label class="field">Материалы (строка: название; количество; ед.; цена)<textarea id="defectMaterials" rows="3" placeholder="Доска; 4; шт; 450&#10;Крепёж; 1; уп.; 220"></textarea></label><div class="actions"><button onclick="closeModal()">Отмена</button><button onclick="saveDefect()">Сохранить дефект</button></div>';
  if(typeof modal==='function')modal(html);
 };
+window.editDefect=function(id){
+ const d=arr('defects').find(x=>String(x.id)===String(id));if(!d)return;
+ window.editingDefectId=d.id;
+ const opts=['Низкая','Средняя','Высокая','Критическая'].map(x=>'<option '+(d.severity===x?'selected':'')+'>'+x+'</option>').join('');
+ const materials=(d.materials||[]).map(m=>[m.name,m.qty,m.unit,m.price].join('; ')).join('\\n');
+ modal('<h2>Изменить дефект</h2><label class="field">Что обнаружено<input id="defectTitle" value="'+esc(d.title)+'"></label><label class="field">Серьёзность<select id="defectSeverity">'+opts+'</select></label><label class="field">Описание и место<textarea id="defectDescription" rows="3">'+esc(d.description||'')+'</textarea></label><label class="field">Материалы (строка: название; количество; ед.; цена)<textarea id="defectMaterials" rows="3">'+esc(materials)+'</textarea></label><div class="actions"><button onclick="closeModal()">Отмена</button><button onclick="saveDefect()">Сохранить изменения</button></div>');
+};
 window.saveDefect=function(){
  const title=(byId('defectTitle')&&byId('defectTitle').value||'').trim();if(!title)return say('Опиши обнаруженный дефект.');
  const raw=byId('defectMaterials')&&byId('defectMaterials').value||'';
- const materials=raw.split(/\r?\n/).map(x=>x.split(';')).filter(x=>x[0]&&Number(x[1])>0).map(x=>({name:x[0].trim(),qty:Number(x[1]),unit:(x[2]||'шт').trim(),price:Math.max(0,Number(x[3])||0)}));
- arr('defects').push({id:uid(),objectId:G.selected,title,severity:byId('defectSeverity')&&byId('defectSeverity').value||'Средняя',description:(byId('defectDescription')&&byId('defectDescription').value||'').trim(),materials,status:'Открыт',date:date(),taskId:null});
+ const materials=raw.split(/\\r?\\n/).map(x=>x.split(';')).filter(x=>x[0]&&Number(x[1])>0).map(x=>({name:x[0].trim(),qty:Number(x[1]),unit:(x[2]||'шт').trim(),price:Math.max(0,Number(x[3])||0)}));
+ const values={title,severity:byId('defectSeverity')&&byId('defectSeverity').value||'Средняя',description:(byId('defectDescription')&&byId('defectDescription').value||'').trim(),materials};
+ const editing=window.editingDefectId;
+ if(editing!=null){
+  const d=arr('defects').find(x=>String(x.id)===String(editing));
+  if(d){Object.assign(d,values);const task=arr('tasks').find(t=>String(t.id)===String(d.taskId));if(task){task.title='Устранить дефект: '+d.title;task.notes=d.description;task.purchases=materials.map(m=>({name:m.name,qty:m.qty,unit:m.unit,price:m.price}));task.priority=d.severity==='Критическая'||d.severity==='Высокая'?'Высокий':'Обычный';}}
+ }else arr('defects').push({id:uid(),objectId:G.selected,...values,status:'Открыт',date:date(),taskId:null});
+ window.editingDefectId=null;
  saveAll();if(typeof closeModal==='function')closeModal();window.renderInspectionWorkspace();
 };
 window.createTaskFromDefect=function(id){
