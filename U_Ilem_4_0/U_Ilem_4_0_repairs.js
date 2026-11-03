@@ -113,8 +113,9 @@ const scene=byId('scene');
 if(scene)scene.addEventListener('click',function(e){
  const marker=e.target.closest('#scene .hotspot');
  if(marker){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();if(G.plotSelection){toastMsg('Сначала выбери свободное место, а не существующий объект.');return;}const key=marker.dataset.object;if(G.objects&&G.objects[key]){G.selected=key;saveNow();if(typeof renderScene==='function')renderScene();if(typeof renderObject==='function')renderObject();}return;}
- if(G.plotSelection&&!e.target.closest('button')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();const layer=scene.querySelector('.camera-layer')||scene,r=layer.getBoundingClientRect();if(!r.width||!r.height)return;const x=Math.max(1,Math.min(99,(e.clientX-r.left)/r.width*100)),y=Math.max(1,Math.min(99,(e.clientY-r.top)/r.height*100)),p=G.plotSelection;if(typeof window.addBuildingAt==='function')window.addBuildingAt(p.plot,p.type,x,y);else toastMsg('Инструмент размещения недоступен.');}
+ if(G.plotSelection&&!e.target.closest('button')&&!e.target.closest('#placementHint')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();const layer=scene.querySelector('.camera-layer')||scene,r=layer.getBoundingClientRect();if(!r.width||!r.height)return;const x=Math.max(1,Math.min(99,(e.clientX-r.left)/r.width*100)),y=Math.max(1,Math.min(99,(e.clientY-r.top)/r.height*100)),p=G.plotSelection;if(typeof window.addBuildingAt==='function')window.addBuildingAt(p.plot,p.type,x,y);else toastMsg('Инструмент размещения недоступен.');}
 },true);
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&G.plotSelection&&typeof window.cancelMapPlacement==='function')window.cancelMapPlacement();});
 
 /* Добавляем календарные действия после загрузки базовых обработчиков. */
 window.ilemAddCalendarTask=function(i){
