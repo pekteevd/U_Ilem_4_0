@@ -18,6 +18,8 @@ const CONSTRUCTION_JS = 'U_Ilem_4_0_construction.js';
 const CALENDAR_TASKS_JS = 'U_Ilem_4_0_calendar_tasks.js';
 const MAP_UI_JS = 'U_Ilem_4_0_map_ui.js';
 const OLLAMA_JS = 'U_Ilem_4_0_ollama.js';
+const WORLD3D_JS = 'U_Ilem_4_0_world3d.js';
+const APPROVED_MAP = path.resolve(ROOT, '..', 'U_Ilem_4_0_visual_base.png');
 const MODEL = 'qwen3:4b';
 const OLLAMA = 'http://127.0.0.1:11434';
 
@@ -178,6 +180,16 @@ async function handler(req, res) {
     }
   }
 
+  if ((req.method === 'GET' || req.method === 'HEAD') && url.pathname === '/U_Ilem_4_0_visual_base.png') {
+    fs.stat(APPROVED_MAP, (error, stat) => {
+      if (error || !stat.isFile()) return sendJson(res, 404, { error: 'Approved map asset not found' });
+      res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': stat.size, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' });
+      if (req.method === 'HEAD') return res.end();
+      fs.createReadStream(APPROVED_MAP).pipe(res);
+    });
+    return;
+  }
+
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     return sendJson(res, 405, { error: 'Method not allowed' });
   }
@@ -245,7 +257,8 @@ async function handler(req, res) {
           '<script src="/' + CONSTRUCTION_JS + '"></script>',
           '<script src="/' + CALENDAR_TASKS_JS + '"></script>',
           '<script src="/' + MAP_UI_JS + '"></script>',
-          '<script src="/' + OLLAMA_JS + '"></script>'
+          '<script src="/' + OLLAMA_JS + '"></script>',
+          '<script src="/' + WORLD3D_JS + '"></script>'
         ];
         for (const tag of moduleTags) {
           if (!html.includes(tag)) {
