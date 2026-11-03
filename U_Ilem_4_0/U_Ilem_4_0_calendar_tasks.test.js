@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'U_Ilem_4_0_calendar_tasks.js'),'utf8');
-const elements={workspace:{innerHTML:''}};
+const elements={workspace:{innerHTML:''},liveTasks:{innerHTML:''}};
 const document={getElementById(id){return elements[id]||null;}};
 const G={
  day:4,month:5,year:2,tab:'calendar',selected:'mainHouse',
@@ -15,7 +15,7 @@ const G={
 let saves=0,boardRenders=0,taskRenders=0,messages=[];
 const window={
  renderWorkspace(){},renderLiveTasks(){boardRenders++;},renderTasks(){taskRenders++;},
- openTaskReview(){},ilemApproveTask(){},ilemRejectTask(){},ilemExecuteTask(){}
+ openTaskReview(){},ilemApproveTask(){},ilemRejectTask(){},ilemExecuteTask(){},modal(html){elements.modalHtml=html;},closeModal(){}
 };
 const months=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const seasons=['Зима','Весна','Лето','Осень'];
@@ -32,7 +32,7 @@ test('adding recommendation creates one shared task record',()=>{
  assert.equal(G.calendar.monthlyTasks.length,0);
 });
 test('task appears in common board and calendar list',()=>{
- assert.ok(boardRenders>0);assert.ok(taskRenders>0);window.renderWorkspace();
+ assert.ok(elements.liveTasks.innerHTML.includes('Осмотр сада после зимы'));assert.ok(taskRenders>0);window.renderWorkspace();
  assert.ok(elements.workspace.innerHTML.includes('ilemAddCalendarTask(0)')===false);
  assert.ok(elements.workspace.innerHTML.includes('План месяца'));
  assert.ok(elements.workspace.innerHTML.includes('Осмотр сада после зимы'));
@@ -54,8 +54,13 @@ test('legacy calendar entries migrate once into shared tasks',()=>{
  const count=G.tasks.length;C.migrateLegacy();assert.equal(G.tasks.length,count);
  assert.equal(G.calendar.monthlyTasks.length,1);
 });
-test('custom calendar task is also a shared task',()=>{
- const id=window.ilemCreateCalendarTask();assert.ok(G.tasks.some(t=>t.id===id&&t.title==='Покрасить входную дверь'));
+test('custom task form and save create one shared task',()=>{
+ window.ilemCreateCalendarTask();assert.ok(elements.modalHtml.includes('ilemNewTaskTitle'));
+ elements.ilemNewTaskTitle={value:'Покрасить входную дверь'};elements.ilemNewTaskDescription={value:'Подготовить и покрасить'};elements.ilemNewTaskPerson={value:'Дмитрий'};elements.ilemNewTaskObject={value:'mainHouse'};elements.ilemNewTaskDue={value:'12.05.2'};elements.ilemNewTaskPriority={value:'Высокий'};elements.ilemNewTaskHours={value:'3'};elements.ilemNewTaskStage={value:''};elements.ilemNewTaskResources={value:'Краска: 1'};
+ const id=window.ilemSaveNewTask();const t=G.tasks.find(x=>x.id===id);assert.ok(t);assert.equal(t.object,'mainHouse');assert.equal(t.resources[0].name,'Краска');assert.equal(t.hours,3);
+});
+test('task review opens and edits the shared record',()=>{
+ const t=G.tasks[0];assert.equal(window.openTaskReview(t.id),true);assert.ok(elements.modalHtml.includes('ilemTaskResources'));
 });
 if(process.exitCode)process.exit(process.exitCode);
 process.stdout.write('Calendar/task integration: '+checks+'/7 checks passed. Saves: '+saves+'.\n');
