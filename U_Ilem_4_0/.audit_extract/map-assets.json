@@ -1,0 +1,21 @@
+{
+  "baseHtmlBytes": 5159407,
+  "approvedMapHtmlBytes": 4990019,
+  "baseImages": [
+    {
+      "index": 1,
+      "mime": "png",
+      "bytes": 3783363,
+      "sha256": "ec26dcb2cb8fac770c86880c8d74ef7a818c4a5d66453fcc81b2603a93692b7b"
+    }
+  ],
+  "approvedImages": [
+    {
+      "index": 1,
+      "mime": "png",
+      "bytes": 3739484,
+      "sha256": "4281269c6da36782b4a854274a058d2dabb6ae3ae25b77f551d6c82ed0df1ab9"
+    }
+  ],
+  "sharedImageHashes": []
+}
