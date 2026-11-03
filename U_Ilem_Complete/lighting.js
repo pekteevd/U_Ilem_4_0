@@ -22,6 +22,12 @@
     return true;
   }
   if(!ensure()) return;
+  // Перенос старого стартового бюджета к утверждённой базовой экономике.
+  // Применяется один раз и не трогает уже настроенные сохранения.
+  if(!G.financeSetupVersion && G.cash===25000 && (G.reserve||0)===0 && G.year===1 && G.month===4 && G.day===1){
+    G.cash=2000000;G.reserve=500000;G.financeSetupVersion=1;
+    if(typeof log==='function')log('Стартовый бюджет настроен: 2 000 000 ₽ на развитие и 500 000 ₽ резерва.');
+  } else if(!G.financeSetupVersion) G.financeSetupVersion=1;
   const def = type => catalog.find(x=>x.type===type) || catalog[0];
   function buy(type){
     const d=def(type);
