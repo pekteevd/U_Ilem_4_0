@@ -1,4 +1,3 @@
-```bat
 @echo off
 setlocal
 cd /d "%~dp0"
@@ -59,4 +58,3 @@ if "%READY%"=="1" (
 )
 
 endlocal
-```
