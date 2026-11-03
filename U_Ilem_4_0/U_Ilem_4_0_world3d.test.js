@@ -11,7 +11,7 @@ const gl={
  TRIANGLES:11,STREAM_DRAW:12,LINE_LOOP:13,
  createShader(){return {};},shaderSource(){},compileShader(){},getShaderParameter(){return true;},getShaderInfoLog(){return '';},
  createProgram(){return {};},attachShader(){},linkProgram(){},getProgramParameter(){return true;},getProgramInfoLog(){return '';},
- getAttribLocation(_p,n){return n==='p'?0:1;},createBuffer(){return {};},bindBuffer(){},bufferData(){},
+ useProgram(){},getAttribLocation(_p,n){return n==='p'?0:1;},createBuffer(){return {};},bindBuffer(){},bufferData(){},
  enableVertexAttribArray(){},vertexAttribPointer(){},viewport(){},clearColor(){},clear(){},enable(){},blendFunc(){},
  drawArrays(){},disableVertexAttribArray(){},vertexAttrib4f(){},deleteBuffer(){}
 };
