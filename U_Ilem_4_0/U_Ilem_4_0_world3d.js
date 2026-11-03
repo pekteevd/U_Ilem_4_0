@@ -38,12 +38,12 @@ function hex(h){const n=parseInt(h.slice(1),16);return [(n>>16&255)/255,(n>>8&25
 function shade(c,k){return c.map(v=>clamp(v*k,0,1));}
 function install(){
  const scene=$('scene'); if(!scene)return;
- const legacyTools=$('plotControls'); if(legacyTools)legacyTools.remove();
+
  scene.classList.add('uilem-world');
  const img=scene.querySelector('img');
  if(img){img.src='/U_Ilem_4_0_visual_base.png';img.alt='Утверждённая основная карта У Илем';img.style.animation='none';}
  const fx=$('weatherFx'); if(fx)fx.style.pointerEvents='none';
- scene.querySelectorAll('.hotspot').forEach(b=>{b.style.pointerEvents='none';b.style.opacity='.0';b.setAttribute('aria-hidden','true');});
+
  let canvas=$('uilemWorldCanvas');
  if(!canvas){canvas=document.createElement('canvas');canvas.id='uilemWorldCanvas';scene.appendChild(canvas);}
  let tools=$('uilemWorldTools');
@@ -53,12 +53,14 @@ function install(){
  if(!style){style=document.createElement('style');style.id='uilemWorldStyle';style.textContent=
  '#scene.uilem-world{isolation:isolate;touch-action:pan-y}#scene.uilem-world>img{width:100%;height:100%;object-fit:cover;animation:none!important}#uilemWorldCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;display:block;touch-action:none}#uilemWorldTools{z-index:8;left:8px;bottom:8px;right:8px;align-items:center}#uilemWorldTools select{max-width:130px;border-radius:8px;padding:7px;background:#f3e6ca;color:#392a1b;border:1px solid #947044}#uilemWorldTools button{font-size:11px;padding:7px 9px}#scene:after{pointer-events:none!important;animation:none!important}';document.head.appendChild(style);}
  const gl=canvas.getContext('webgl',{alpha:true,antialias:true});
- if(!gl){canvas.style.display='none';console.error('WebGL недоступен: объёмная карта не запущена');return;}
+ if(!gl){canvas.style.display='none';if(tools)tools.remove();console.error('WebGL недоступен: оставлена исходная карта с обычным управлением');return;}
  const vertex='attribute vec2 p;attribute vec4 c;varying vec4 v;void main(){gl_Position=vec4(p,0.0,1.0);v=c;}';
  const fragment='precision mediump float;varying vec4 v;void main(){gl_FragColor=v;}';
  function shader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
  const program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vertex));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(program);
  if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
+ const legacyTools=$('plotControls'); if(legacyTools)legacyTools.remove();
+ scene.querySelectorAll('.hotspot').forEach(b=>{b.style.pointerEvents='none';b.style.opacity='0';b.setAttribute('aria-hidden','true');});
  const pLoc=gl.getAttribLocation(program,'p'),cLoc=gl.getAttribLocation(program,'c');
  const pBuf=gl.createBuffer(),cBuf=gl.createBuffer();
  let W=1,H=1,mode='select',selected=null,drag=null,meshes=[];
