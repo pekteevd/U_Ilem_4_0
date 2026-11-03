@@ -162,6 +162,8 @@ function install(){
   if(typeof window.toast==='function')window.toast('3D-объект размещён. Создана связанная задача.');
  }
  canvas.addEventListener('pointerdown',e=>{
+  const externalPlacement=scene.classList.contains('u4p-placement-active')||scene.classList.contains('eco-locate-active')||scene.classList.contains('placing')||(G.lighting&&G.lighting.pending!==null&&G.lighting.pending!==undefined);
+  if(externalPlacement){mode='select';return;}
   const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,id=pick(x,y);
   if(mode==='place'){addAt(x,y);mode='select';return;}
   if(id){setSelected(id);if(mode==='move'){drag={id,pointer:e.pointerId};canvas.setPointerCapture(e.pointerId);}}
