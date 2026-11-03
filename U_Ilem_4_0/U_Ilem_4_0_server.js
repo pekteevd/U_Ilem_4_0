@@ -11,11 +11,15 @@ const ROOT = __dirname;
 const MAIN_HTML = path.join(ROOT, 'U_Ilem_4_0_base.html');
 const LAUNCHER_HTML = path.join(ROOT, 'U_Ilem_4_0.html');
 const LIGHTING_JS = 'U_Ilem_4_0_lighting.js';
-const INTERIORS_JS = 'U_Ilem_4_0_interiors.js';
 const ECOLOGY_JS = 'U_Ilem_4_0_ecology.js';
 const WATER_JS = 'U_Ilem_4_0_water.js';
 const PRODUCTION_JS = 'U_Ilem_4_0_production.js';
 const CONSTRUCTION_JS = 'U_Ilem_4_0_construction.js';
+const REPAIRS_JS = 'U_Ilem_4_0_repairs.js';
+const OPERATIONS_JS = 'U_Ilem_4_0_operations.js';
+const OLLAMA_JS = 'U_Ilem_4_0_ollama.js';
+const THREE_JS = 'U_Ilem_4_0_3d.js';
+const APPROVED_MAP_HTML = path.resolve(ROOT, '..', 'U_Ilem_3_0_APPROVED_MAP.html');
 const MODEL = 'qwen3:4b';
 const OLLAMA = 'http://127.0.0.1:11434';
 
@@ -220,6 +224,26 @@ async function handler(req, res) {
         if (readError) return sendJson(res, 500, { error: 'Cannot read version 4.0 base game file' });
         let html = buffer.toString('utf8');
 
+        // Use the approved map asset, not the older illustration embedded in the 3.2 base.
+        let approvedMapPage;
+        try {
+          approvedMapPage = fs.readFileSync(APPROVED_MAP_HTML, 'utf8');
+        } catch (error) {
+          return sendJson(res, 500, {
+            error: 'Approved map file is missing. Keep U_Ilem_3_0_APPROVED_MAP.html one folder above U_Ilem_4_0.',
+            detail: error.message
+          });
+        }
+        const approvedMap = approvedMapPage.match(/<img\\b[^>]*id="map"[^>]*src="(data:image\\/png;base64,[^"]+)"/i);
+        const sceneStart = html.indexOf('id="scene"');
+        const sceneImageStart = sceneStart >= 0 ? html.indexOf('<img', sceneStart) : -1;
+        const sceneSrcStart = sceneImageStart >= 0 ? html.indexOf('src="data:image/png;base64,', sceneImageStart) : -1;
+        const sceneSrcEnd = sceneSrcStart >= 0 ? html.indexOf('"', sceneSrcStart + 5) : -1;
+        if (!approvedMap || sceneSrcStart < 0 || sceneSrcEnd < 0) {
+          return sendJson(res, 500, { error: 'Cannot apply the approved map to the game scene.' });
+        }
+        html = html.slice(0, sceneSrcStart + 5) + approvedMap[1] + html.slice(sceneSrcEnd);
+
         // The base copy remains untouched. The server assembles the running 4.0 page.
         html = html.replace('<title>У Илем 3.2 | Живая усадьба</title>',
           '<title>У Илем 4.0 | Живая усадьба</title>');
@@ -237,11 +261,14 @@ async function handler(req, res) {
 
         const moduleTags = [
           '<script src="/' + LIGHTING_JS + '"></script>',
-          '<script src="/' + INTERIORS_JS + '"></script>',
           '<script src="/' + ECOLOGY_JS + '"></script>',
           '<script src="/' + WATER_JS + '"></script>',
           '<script src="/' + PRODUCTION_JS + '"></script>',
-          '<script src="/' + CONSTRUCTION_JS + '"></script>'
+          '<script src="/' + CONSTRUCTION_JS + '"></script>',
+          '<script src="/' + REPAIRS_JS + '"></script>',
+          '<script src="/' + OPERATIONS_JS + '"></script>',
+          '<script src="/' + OLLAMA_JS + '"></script>',
+          '<script src="/' + THREE_JS + '"></script>'
         ];
         for (const tag of moduleTags) {
           if (!html.includes(tag)) {
