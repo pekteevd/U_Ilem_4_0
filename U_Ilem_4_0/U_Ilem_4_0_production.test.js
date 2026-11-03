@@ -89,6 +89,15 @@ test('indoor furniture cannot be placed directly on map',()=>{
  const good=G.production.stock.find(x=>x.recipeId==='chair');
  assert.ok(good);assert.equal(P.startPlacement(good.id),false);
 });
+test('lighting and workshop placement modes do not overlap',()=>{
+ G.lighting={pending:77};
+ assert.equal(P.craft('planter'),true);
+ const good=G.production.stock.find(x=>x.recipeId==='planter');
+ assert.ok(good);assert.equal(P.startPlacement(good.id),true);
+ assert.equal(G.lighting.pending,null);
+ assert.equal(G.production.pendingPlacement,undefined);
+ P.cancelPlacement();
+});
 test('history and save hooks are used',()=>{assert.ok(G.production.history.length>=4);assert.ok(saves>=5);});
 if(process.exitCode)process.exit(process.exitCode);
 process.stdout.write('Production system: '+checks+'/9 checks passed. Saves: '+saves+'.\n');
