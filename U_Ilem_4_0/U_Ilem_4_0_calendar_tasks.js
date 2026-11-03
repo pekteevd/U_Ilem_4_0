@@ -206,9 +206,32 @@ function renderBoard(){
 }
 function setTaskStatus(id,status){
  const t=G.tasks.find(x=>String(x.id)===String(id));if(!t)return false;
- t.status=status;t.updatedAt=date();if(status==='Выполнена')t.doneAt=date();if(status==='Запланирована')t.doneAt=null;
- save();renderBoard();if(G.tab==='calendar')render();if(typeof window.renderTasks==='function')window.renderTasks();
+ if(status==='Выполнена'){
+  if(t.constructionProjectId){
+   const p=G.constructionProjects&&G.constructionProjects[t.constructionProjectId];
+   if(p&&p.status!=='Готово'){tell('Сначала заверши все строительные этапы.');return false;}
+  }
+  if(t.stageId){
+   const stage=(G.stages||[]).find(s=>String(s.id)===String(t.stageId));
+   if(stage&&num(stage.progress)<100){tell('Сначала выполни связанный этап объекта.');return false;}
+  }
+  if(!t.stageId&&!t.constructionProjectId){
+   const missing=taskShortages(t);
+   if(missing.length){tell('Не хватает материалов: '+missing.map(x=>x.name+' '+x.missing).join(', '));return false;}
+   if(!t.resourcesConsumedAt){
+    taskNeeds(t).forEach(x=>{const item=(G.inventory||[]).find(i=>String(i.name).toLowerCase()===x.name.toLowerCase());if(item)item.qty=Math.max(0,num(item.qty)-x.qty);});
+    t.resourcesConsumedAt=date();
+   }
+  }
+  t.doneAt=date();
+ } else if(status==='Запланирована'||status==='В работе'||status==='Отложена') {
+  if(status==='Запланирована')t.doneAt=null;
+ }
+ t.status=status;t.updatedAt=date();save();renderBoard();
+ if(G.tab==='calendar')render();
+ if(typeof window.renderTasks==='function')window.renderTasks();
  if(typeof window.renderObject==='function')window.renderObject();
+ if(typeof window.renderStats==='function')window.renderStats();
  tell('Статус задачи: '+status+'.');return true;
 }
 
