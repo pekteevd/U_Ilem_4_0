@@ -49,7 +49,7 @@ function install(){
  if(!canvas){canvas=document.createElement('canvas');canvas.id='uilemWorldCanvas';scene.appendChild(canvas);}
  let tools=$('uilemWorldTools');
  if(!tools){tools=document.createElement('div');tools.id='uilemWorldTools';tools.className='plot-tools';scene.appendChild(tools);}
- tools.innerHTML='<button type="button" data-mode="select">↖ Выбор</button><select id="uilemObjectType" aria-label="Тип объекта"><option value="house">Дом</option><option value="bath">Баня</option><option value="shed">Хозблок</option><option value="greenhouse">Теплица</option><option value="gazebo">Беседка</option><option value="tree">Дерево</option><option value="bench">Скамейка</option><option value="fire">Костровая зона</option></select><button type="button" data-mode="place">＋ Разместить</button><button type="button" data-mode="move">↔ Переместить</button>';
+ tools.innerHTML='<button type="button" data-mode="select">↖ Выбор</button><select id="uilemObjectType" aria-label="Тип объекта"><option value="house">Дом</option><option value="bath">Баня</option><option value="shed">Хозблок</option><option value="greenhouse">Теплица</option><option value="gazebo">Беседка</option><option value="toilet">Туалет</option><option value="shower">Душ</option><option value="tree">Дерево</option><option value="bench">Скамейка</option><option value="fire">Костровая зона</option><option value="well">Колодец</option></select><button type="button" data-mode="place">＋ Разместить</button><button type="button" data-mode="move">↔ Переместить</button><button type="button" data-action="rotate">↻ Повернуть</button><button type="button" data-action="scaleUp">＋ Размер</button><button type="button" data-action="scaleDown">－ Размер</button><button type="button" data-action="edit">⚙ Параметры</button>';
  let style=$('uilemWorldStyle');
  if(!style){style=document.createElement('style');style.id='uilemWorldStyle';style.textContent=
  '#scene.uilem-world{isolation:isolate;touch-action:pan-y}#scene.uilem-world>img{width:100%;height:100%;object-fit:cover;animation:none!important}#uilemWorldCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;display:block;touch-action:none}#uilemWorldTools{z-index:8;left:8px;bottom:8px;right:8px;align-items:center}#uilemWorldTools select{max-width:130px;border-radius:8px;padding:7px;background:#f3e6ca;color:#392a1b;border:1px solid #947044}#uilemWorldTools button{font-size:11px;padding:7px 9px}#scene:after{pointer-events:none!important;animation:none!important}';document.head.appendChild(style);}
@@ -64,7 +64,7 @@ function install(){
  scene.querySelectorAll('.hotspot').forEach(b=>{b.style.pointerEvents='none';b.style.opacity='0';b.setAttribute('aria-hidden','true');});
  const pLoc=gl.getAttribLocation(program,'p'),cLoc=gl.getAttribLocation(program,'c');
  const pBuf=gl.createBuffer(),cBuf=gl.createBuffer();
- let W=1,H=1,mode='select',selected=null,drag=null,meshes=[];
+ let W=1,H=1,mode='select',selected=G.selected?String(G.selected):null,drag=null,meshes=[];
  function project(x,y,z){return [x, y-z*.95];}
  function screen(x,y,z){const p=project(x,y,z);return [(p[0]/W)*2-1,1-(p[1]/H)*2];}
  function pushTri(out,a,b,c,color,alpha){const n=hex(color);[a,b,c].forEach(v=>{const q=screen(v[0],v[1],v[2]);out.pos.push(q[0],q[1]);out.col.push(n[0],n[1],n[2],alpha===undefined?1:alpha);});}
