@@ -10,7 +10,7 @@ const G={
  day:4,month:5,year:2,tab:'calendar',selected:'mainHouse',
  objects:{mainHouse:{name:'Родительский дом'}},
  people:[{id:'d',name:'Дмитрий'}],tasks:[],
- calendar:{monthlyTasks:[]}
+ cash:10000,inventory:[{id:1,name:'Краска',qty:0,price:500,unit:'банка',reserved:0}],calendar:{monthlyTasks:[]}
 };
 let saves=0,boardRenders=0,taskRenders=0,messages=[];
 const window={
@@ -19,7 +19,7 @@ const window={
 };
 const months=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const seasons=['Зима','Весна','Лето','Осень'];
-const context={G,window,document,save(){saves++;},toast(x){messages.push(x);},renderTasks(){taskRenders++;},prompt(){return 'Покрасить входную дверь';},months,seasons,Date,Math,Number,String,Array,Object,JSON,Set};
+const context={G,window,document,save(){saves++;},toast(x){messages.push(x);},log(){},money(n){return n+' ₽';},renderTasks(){taskRenders++;},prompt(){return 'Покрасить входную дверь';},months,seasons,Date,Math,Number,String,Array,Object,JSON,Set};
 vm.runInNewContext(source,context,{filename:'U_Ilem_4_0_calendar_tasks.js'});
 const C=window.UilemCalendarTasks;
 let checks=0;
@@ -59,8 +59,14 @@ test('custom task form and save create one shared task',()=>{
  elements.ilemNewTaskTitle={value:'Покрасить входную дверь'};elements.ilemNewTaskDescription={value:'Подготовить и покрасить'};elements.ilemNewTaskPerson={value:'Дмитрий'};elements.ilemNewTaskObject={value:'mainHouse'};elements.ilemNewTaskDue={value:'12.05.2'};elements.ilemNewTaskPriority={value:'Высокий'};elements.ilemNewTaskHours={value:'3'};elements.ilemNewTaskStage={value:''};elements.ilemNewTaskResources={value:'Краска: 1'};
  const id=window.ilemSaveNewTask();const t=G.tasks.find(x=>x.id===id);assert.ok(t);assert.equal(t.object,'mainHouse');assert.equal(t.resources[0].name,'Краска');assert.equal(t.hours,3);
 });
-test('task review opens and edits the shared record',()=>{
- const t=G.tasks[0];assert.equal(window.openTaskReview(t.id),true);assert.ok(elements.modalHtml.includes('ilemTaskResources'));
+test('task review opens with materials and stage controls',()=>{
+ const t=G.tasks[0];assert.equal(window.openTaskReview(t.id),true);assert.ok(elements.modalHtml.includes('ilemTaskResources'));assert.ok(elements.modalHtml.includes('ilemTaskStage'));
+});
+test('task purchase fills missing stock in one transaction',()=>{
+ const t=G.tasks.find(x=>x.title==='Покрасить входную дверь');assert.equal(window.ilemTaskPurchase(t.id),true);assert.ok(elements.modalHtml.includes('Закупить недостающее')===false);assert.equal(window.ilemConfirmTaskPurchase(t.id),true);assert.equal(G.inventory[0].qty,1);assert.equal(G.cash,9500);
+});
+test('task completion consumes its linked materials',()=>{
+ const t=G.tasks.find(x=>x.title==='Покрасить входную дверь');assert.equal(window.ilemSetTaskStatus(t.id,'Выполнена'),true);assert.equal(G.inventory[0].qty,0);assert.equal(t.status,'Выполнена');
 });
 if(process.exitCode)process.exit(process.exitCode);
 process.stdout.write('Calendar/task integration: '+checks+'/7 checks passed. Saves: '+saves+'.\n');
