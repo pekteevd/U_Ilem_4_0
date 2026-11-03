@@ -93,12 +93,13 @@ function install(){
   // Ground shadow is a translucent flattened polygon, separate from the solid mesh.
   const shadow='#5c5140';
   const w=t.w*s,d=t.d*s,h=t.h*s;
-  if(t.label==='Дерево'){tree(out,x,y,z,s);return;}
-  box(out,x,y,z,w,d,h,[t.wall,t.wall,t.wall,t.wall,shade(hex(t.wall),1.18).map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('').replace(/^/,'#')],o.rotation);
-  if(['house','bath','shed','greenhouse','gazebo','toilet','shower'].includes(normalizeType(o.type)))roof(out,x,y,h,w*1.12,d*1.12,h*.42,t.roof,o.rotation);
+  const unit=Math.min(W,H)/120; const uw=w*unit,ud=d*unit,uh=h*unit;
+  if(t.label==='Дерево'){tree(out,x,y,z,s*unit);return;}
+  box(out,x,y,z,uw,ud,uh,[t.wall,t.wall,t.wall,t.wall,shade(hex(t.wall),1.18).map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('').replace(/^/,'#')],o.rotation);
+  if(['house','bath','shed','greenhouse','gazebo','toilet','shower'].includes(normalizeType(o.type)))roof(out,x,y,uh,uw*1.12,ud*1.12,uh*.42,t.roof,o.rotation);
   if(normalizeType(o.type)==='bench'){
-   box(out,x,y,z+.7*s,w,d*.28,.22*s,['#71472b','#805432','#71472b','#805432','#a06d3e'],o.rotation);
-   box(out,x,y,z+.25*s,w*.9,d*.22,.18*s,['#71472b','#805432','#71472b','#805432','#a06d3e'],o.rotation);
+   box(out,x,y,z+.7*s,uw,ud*.28,.22*unit,['#71472b','#805432','#71472b','#805432','#a06d3e'],o.rotation);
+   box(out,x,y,z+.25*s,uw*.9,ud*.22,.18*unit,['#71472b','#805432','#71472b','#805432','#a06d3e'],o.rotation);
   }
   if(normalizeType(o.type)==='fire'){/* open firepit geometry is intentionally low */ }
  }
@@ -107,7 +108,7 @@ function install(){
   W=rect.width;H=rect.height;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);gl.viewport(0,0,canvas.width,canvas.height);
   gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
   const out={pos:[],col:[]};meshes=[];
-  G.mapObjects.forEach((o,i)=>{const t=TYPES[normalizeType(o.type)]||TYPES.shed;buildObject(out,o,i);meshes.push({id:o.id,x:o.x*W,y:o.y*H,r:Math.max(t.w,t.d)*2.1+12});});
+  G.mapObjects.forEach((o,i)=>{const t=TYPES[normalizeType(o.type)]||TYPES.shed;buildObject(out,o,i);meshes.push({id:o.id,x:o.x*W,y:o.y*H,r:Math.max(t.w,t.d)*unit*1.25+12});});
   gl.useProgram(program);gl.bindBuffer(gl.ARRAY_BUFFER,pBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(out.pos),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(pLoc);gl.vertexAttribPointer(pLoc,2,gl.FLOAT,false,0,0);
   gl.bindBuffer(gl.ARRAY_BUFFER,cBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(out.col),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(cLoc);gl.vertexAttribPointer(cLoc,4,gl.FLOAT,false,0,0);
   gl.drawArrays(gl.TRIANGLES,0,out.pos.length/2);
