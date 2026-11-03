@@ -100,4 +100,4 @@ test('lighting and workshop placement modes do not overlap',()=>{
 });
 test('history and save hooks are used',()=>{assert.ok(G.production.history.length>=4);assert.ok(saves>=5);});
 if(process.exitCode)process.exit(process.exitCode);
-process.stdout.write('Production system: '+checks+'/9 checks passed. Saves: '+saves+'.\n');
+process.stdout.write('Production system: '+checks+'/12 checks passed. Saves: '+saves+'.\n');

@@ -11,9 +11,12 @@ U_Ilem_4_0_interiors.js         Редактор внутренних плани
 U_Ilem_4_0_ecology.js           Жизненный цикл деревьев и кустарников.
 U_Ilem_4_0_water.js             Насос, накопление, разводка воды и автополив.
 U_Ilem_4_0_production.js        Мастерская, изготовление изделий и размещение.
+U_Ilem_4_0_production.test.js  Проверки рецептов и связи с интерьером.
 U_Ilem_4_0_ecology.test.js      Проверки жизненного цикла и размещения растений.
 U_Ilem_4_0_construction.js      Четыре этапа стройки и интеграция мастерской.
 U_Ilem_4_0_construction.test.js Проверки проекта и строительных этапов.
+U_Ilem_4_0_water.test.js        Проверки водоснабжения.
+U_Ilem_4_0_interiors.test.js    Проверки редактора планировок.
 Start_U_Ilem_4_0.bat            Запуск игры в Windows.
 CreateShortcut_U_Ilem_4_0.vbs   Создание ярлыка Windows.
 U_Ilem_4_0.ico                  Иконка.

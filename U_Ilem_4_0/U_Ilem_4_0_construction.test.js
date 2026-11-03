@@ -24,4 +24,4 @@ test('garden table is placed from workshop stock',()=>{productionState.stock=[{i
 test('uncrafted bench cannot be placed for free',()=>{productionState.stock=[];const n=G.buildings.length;assert.equal(window.addBuildingAt(1,'bench',50,50),false);assert.equal(G.buildings.length,n);});
 test('all supported construction types contain four phases',()=>{for(const type of ['toilet','shower','bath','guest','workshop','shed','greenhouse','gazebo','fire'])assert.equal(C.blueprints[type].phases.length,4);});
 if(process.exitCode)process.exit(process.exitCode);
-process.stdout.write('Construction workflow '+checks+'/10 checks passed. Saves: '+saves+'.\n');
+process.stdout.write('Construction workflow '+checks+'/11 checks passed. Saves: '+saves+'.\n');
