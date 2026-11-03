@@ -98,8 +98,8 @@ jobs:
           }
           const baseImages = imageStats(html);
           const approvedImages = imageStats(approved);
-          const baseImageMatch = html.match(/data:image\\/png;base64,([A-Za-z0-9+/=]+)/);
-          const approvedImageMatch = approved.match(/data:image\\/png;base64,([A-Za-z0-9+/=]+)/);
+          const baseImageMatch = html.match(/data:image\/png;base64,([A-Za-z0-9+/=]+)/);
+          const approvedImageMatch = approved.match(/data:image\/png;base64,([A-Za-z0-9+/=]+)/);
           const imageDir = path.join(dir, 'map-images');
           fs.mkdirSync(imageDir, { recursive: true });
           if (baseImageMatch) fs.writeFileSync(path.join(imageDir, 'base-map.png'), Buffer.from(baseImageMatch[1], 'base64'));
