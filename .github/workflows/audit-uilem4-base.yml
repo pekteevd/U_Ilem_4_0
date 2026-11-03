@@ -98,7 +98,7 @@ jobs:
           }
           const baseImages = imageStats(html);
           const approvedImages = imageStats(approved);
-          const approvedImageMatch = approved.match(/data:image\\/png;base64,([A-Za-z0-9+/=]+)/);
+          const approvedImageMatch = approved.match(/data:image\/png;base64,([A-Za-z0-9+/=]+)/);
           if (approvedImageMatch) {
             const imageDir = path.join(dir, 'approved-map-image');
             fs.mkdirSync(imageDir, { recursive: true });
