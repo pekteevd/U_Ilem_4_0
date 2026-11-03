@@ -53,4 +53,4 @@ test('monthly transition processes day one once', () => { G.day=4; window.nextMo
 test('history is capped at 30 records', () => { for(let day=2;day<=35;day++){G.day=day;W.dailyTick();} assert.equal(G.waterSystem.history.length,30); });
 test('installed pipe length equals connected routes', () => { assert.equal(G.waterSystem.pipeInstalledMeters,20); });
 if(process.exitCode)process.exit(process.exitCode);
-process.stdout.write('Water system: '+checks+'/16 checks passed. Saves: '+saves+'.\n');
+process.stdout.write('Water system: '+checks+'/17 checks passed. Saves: '+saves+'.\n');
