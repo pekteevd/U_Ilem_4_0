@@ -17,7 +17,7 @@ const RECIPES=[
  {id:'birdhouse',name:'Скворечник',icon:'🐦',kind:'outdoor',hours:1.25,skill:2,cash:70,tools:['Молоток','Шуруповёрт'],materials:[['Доска',2],['Брус',1],['Крепёж',1]],desc:'Небольшой домик для птиц. Место установки выбирается на карте.'},
  {id:'gardenTable',name:'Садовый стол',icon:'🪵',kind:'outdoor',hours:4.5,skill:3,cash:320,tools:['Молоток','Шуруповёрт'],materials:[['Доска',6],['Брус',2],['Крепёж',3],['Пропитка для древесины',0.5]],desc:'Стол для террасы, сада или общей площадки.'}
 ];
-const ui={worker:'a',interiorBuilding:'mainHouse',pendingPlacement:null};
+const ui={worker:'a',pendingPlacement:null};
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const rub=v=>Math.round(num(v)).toLocaleString('ru-RU')+' ₽';
@@ -110,30 +110,6 @@ function craft(id){
  refresh();say('Готовое изделие добавлено на склад мастерской.');
  return true;
 }
-function interiorBuildings(){
- const plans=G.interiorPlans&&typeof G.interiorPlans==='object'?G.interiorPlans:{};
- return Object.keys(plans).map(id=>({id,name:(G.objects&&G.objects[id]&&G.objects[id].name)||id}));
-}
-function transferToInterior(stockId,buildingId){
- ensure();
- const goods=G.production.stock.find(x=>String(x.id)===String(stockId));
- if(!goods)return false;
- const r=recipe(goods.recipeId);
- if(!r||r.kind!=='interior')return say('Это изделие предназначено для размещения на территории, а не в помещении.'),false;
- if(!window.UilemInteriors||typeof window.UilemInteriors.receiveCraftedFurniture!=='function'){
-  say('Редактор интерьеров не готов принять изделие. Перезапусти игру и проверь модуль интерьеров.');
-  return false;
- }
- const target=buildingId||ui.interiorBuilding;
- const construction=G.constructionProjects&&G.constructionProjects[target];
- if(construction&&construction.status!=='Готово'){say('Сначала заверши строительство здания. Мебель можно передать после четвёртого этапа.');return false;}
- const ok=window.UilemInteriors.receiveCraftedFurniture(goods.type,target,goods.name);
- if(!ok){say('Не удалось передать изделие в интерьер.');return false;}
- G.production.stock=G.production.stock.filter(x=>String(x.id)!==String(stockId));
- record('Передано в интерьер: '+goods.name+' · '+((G.objects&&G.objects[target]&&G.objects[target].name)||target)+'.');
- save();render();say('Изделие передано на внутренний склад здания.');
- return true;
-}
 function startPlacement(stockId){
  ensure();
  if(typeof window.cancelMapPlacement==='function')window.cancelMapPlacement();
@@ -210,9 +186,6 @@ function render(){
  const w=document.getElementById('workspace');if(!w||G.tab!=='production')return;
  ensure();
  const people=(G.people||[]).map(p=>'<option value="'+esc(p.id)+'"'+(String(p.id)===String(ui.worker)?' selected':'')+'>'+esc(p.name)+' · навык '+esc(p.skill)+'/5 · '+esc(p.hours)+' ч</option>').join('');
- const buildings=interiorBuildings();
- if(!buildings.some(x=>x.id===ui.interiorBuilding)&&buildings.length)ui.interiorBuilding=buildings[0].id;
- const buildingOptions=buildings.map(x=>'<option value="'+esc(x.id)+'"'+(x.id===ui.interiorBuilding?' selected':'')+'>'+esc(x.name)+'</option>').join('');
  const cards=RECIPES.map(r=>{
   const materials=r.materials.map(m=>{
    const it=inventoryItem(m[0]),have=it?available(it):0;
@@ -223,19 +196,18 @@ function render(){
  const stock=G.production.stock.map(x=>{
   const r=recipe(x.recipeId);
   const actions=r&&r.kind==='interior'
-   ?'<button data-prod-act="transfer" data-id="'+x.id+'">Передать в интерьер</button>'
+   ?'<span class="u4p-stock-note">Хранится на складе мастерской</span>'
    :'<button data-prod-act="place" data-id="'+x.id+'">Установить на карте</button>';
   return'<div class="u4p-stock-row"><span><b>'+esc(x.icon)+' '+esc(x.name)+'</b><small>Изготовлено '+esc(x.createdAt)+' · '+esc(x.maker||'Мастерская')+'</small></span><span>'+actions+'</span></div>';
  }).join('');
  const placed=G.production.placed.map(x=>'<div class="u4p-stock-row"><span><b>'+esc(x.icon)+' '+esc(x.name)+'</b><small>Координаты карты: '+Math.round(num(x.x))+'%, '+Math.round(num(x.y))+'%</small></span><button data-prod-act="remove-placed" data-id="'+x.id+'">Снять на склад</button></div>').join('');
  const history=G.production.history.slice(0,8).map(x=>'<div class="u4p-history"><small>'+esc(x.date)+'</small><span>'+esc(x.text)+'</span></div>').join('');
  let html='<div class="u4p-wrap"><div class="u4p-head"><div><h3>Мастерская и производство</h3><p class="muted">Изготавливай мебель и полезные вещи из материалов со склада. Работа расходует время, энергию, навык и деньги.</p></div><label class="u4p-field">Исполнитель<select id="u4p-worker">'+people+'</select></label></div>';
- html+='<div class="u4p-warning">Материалы списываются только после проверки всех требований. Молоток и шуруповёрт остаются инструментами и не расходуются. Изделия для дома можно передать во внутренний склад здания; уличные предметы устанавливаются кликом по карте.</div>';
+ html+='<div class="u4p-warning">Материалы списываются только после проверки всех требований. Молоток и шуруповёрт остаются инструментами и не расходуются. Готовые уличные предметы устанавливаются кликом по карте; мебель для помещений сохраняется на складе мастерской.</div>';
  html+='<div class="u4p-metrics"><span><b>'+G.production.totalCrafted+'</b><small>изготовлено всего</small></span><span><b>'+G.production.stock.length+'</b><small>готовых изделий</small></span><span><b>'+G.production.placed.length+'</b><small>на территории</small></span><span><b>'+rub(G.cash)+'</b><small>свободные деньги</small></span></div>';
  html+='<h4>Каталог мастерской</h4><div class="u4p-catalog">'+cards+'</div>';
  html+='<h4>Готовые изделия</h4>'+(stock||'<p class="muted">Пока нет готовых изделий. Выбери рецепт и изготовь первый предмет.</p>');
  html+='<h4>Размещение на территории</h4>'+(placed||'<p class="muted">Уличные изделия пока не установлены.</p>');
- if(buildings.length)html+='<div class="u4p-transfer"><label class="u4p-field">Здание для передачи мебели<select id="u4p-building">'+buildingOptions+'</select></label><small>Мебель со склада мастерской можно передать во внутренний склад выбранного здания, а затем разместить в редакторе планировки.</small></div>';
  html+='<h4>Последние операции</h4>'+(history||'<p class="muted">История мастерской пока пуста.</p>');
  html+='<p class="u4p-note">Размещение уличных изделий пока отображается маркерами на иллюстрированной карте. Это рабочая игровая привязка и координатный слой, а не полноценные 3D-модели предметов. Геометрия утверждённой карты не меняется.</p></div>';
  w.innerHTML=html;
@@ -244,18 +216,16 @@ function click(e){
  const b=e.target.closest('[data-prod-act]');if(!b)return;
  const a=b.dataset.prodAct,id=b.dataset.id;
  if(a==='craft')craft(id);
- else if(a==='transfer')transferToInterior(id,document.getElementById('u4p-building')?.value||ui.interiorBuilding);
  else if(a==='place')startPlacement(id);
  else if(a==='remove-placed')removePlaced(id);
 }
 function change(e){
  if(e.target.id==='u4p-worker')ui.worker=e.target.value;
- else if(e.target.id==='u4p-building')ui.interiorBuilding=e.target.value;
 }
 function styles(){
  if(document.getElementById('u4p-style'))return;
  const s=document.createElement('style');s.id='u4p-style';s.textContent=[
- '.u4p-wrap{display:grid;gap:12px}.u4p-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.u4p-head h3{margin:0 0 4px}.u4p-field{display:grid;gap:4px;font:12px Arial;color:#68583f;min-width:190px}.u4p-field select{padding:8px;border:1px solid #b9a27c;border-radius:8px;background:#fffaf0;color:#322719}.u4p-warning{background:#fff3d7;color:#6e4b1f;border:1px solid #d5b36f;border-radius:10px;padding:10px;font:12px/1.45 Arial}.u4p-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.u4p-metrics span{display:grid;gap:3px;background:#f8f0df;border:1px solid #d4c29e;border-radius:9px;padding:10px}.u4p-metrics small{font:10px Arial;color:#806c4e}.u4p-metrics b{font:bold 16px Arial;color:#4c3a27}.u4p-catalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}.u4p-recipe{display:grid;gap:7px;background:#f8f0df;border:1px solid #d4c29e;border-radius:10px;padding:11px}.u4p-recipe-head{display:flex;align-items:center;gap:9px}.u4p-recipe-head>span{font-size:24px}.u4p-recipe-head div{display:grid;gap:2px}.u4p-recipe-head small{font:10px Arial;color:#806c4e}.u4p-recipe p{font:11px/1.4 Arial;color:#806c4e;margin:0;min-height:30px}.u4p-materials{display:grid;gap:3px;font:10px Arial;color:#62553f}.u4p-materials small{color:#8b785a}.u4p-recipe-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font:10px Arial;color:#6d5939}.u4p-recipe-foot button,.u4p-stock-row button{font:11px Arial;padding:7px 9px}.u4p-stock-row{display:flex;justify-content:space-between;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid #dfd1b5;font:12px Arial}.u4p-stock-row small{display:block;color:#806c4e;font:10px Arial;margin-top:3px}.u4p-history{display:grid;grid-template-columns:90px 1fr;gap:8px;padding:5px 0;border-bottom:1px solid #dfd1b5;font:10px Arial;color:#74664f}.u4p-transfer{display:flex;gap:12px;align-items:end;flex-wrap:wrap;background:#f1e6ce;border-radius:10px;padding:10px}.u4p-transfer small{font:10px/1.4 Arial;color:#77684f;max-width:520px}.u4p-note{font:10px/1.45 Arial;color:#817258}.u4p-map-layer{position:absolute;inset:0;z-index:9;pointer-events:none}.u4p-map-item{position:absolute;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:2px;padding:3px 6px;border:1px solid #e3c78e;border-radius:8px;background:#30271ddd;color:#fff1cf;box-shadow:0 2px 7px #0006;white-space:nowrap}.u4p-map-item b{font-size:19px;line-height:1.1}.u4p-map-item small{font:9px Arial}.u4p-placement-active{outline:3px solid #d7b56f;outline-offset:-3px;cursor:crosshair!important}@media(max-width:650px){.u4p-metrics{grid-template-columns:repeat(2,1fr)}.u4p-stock-row{align-items:flex-start;flex-direction:column}}'
+ '.u4p-wrap{display:grid;gap:12px}.u4p-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.u4p-head h3{margin:0 0 4px}.u4p-field{display:grid;gap:4px;font:12px Arial;color:#68583f;min-width:190px}.u4p-field select{padding:8px;border:1px solid #b9a27c;border-radius:8px;background:#fffaf0;color:#322719}.u4p-warning{background:#fff3d7;color:#6e4b1f;border:1px solid #d5b36f;border-radius:10px;padding:10px;font:12px/1.45 Arial}.u4p-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.u4p-metrics span{display:grid;gap:3px;background:#f8f0df;border:1px solid #d4c29e;border-radius:9px;padding:10px}.u4p-metrics small{font:10px Arial;color:#806c4e}.u4p-metrics b{font:bold 16px Arial;color:#4c3a27}.u4p-catalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}.u4p-recipe{display:grid;gap:7px;background:#f8f0df;border:1px solid #d4c29e;border-radius:10px;padding:11px}.u4p-recipe-head{display:flex;align-items:center;gap:9px}.u4p-recipe-head>span{font-size:24px}.u4p-recipe-head div{display:grid;gap:2px}.u4p-recipe-head small{font:10px Arial;color:#806c4e}.u4p-recipe p{font:11px/1.4 Arial;color:#806c4e;margin:0;min-height:30px}.u4p-materials{display:grid;gap:3px;font:10px Arial;color:#62553f}.u4p-materials small{color:#8b785a}.u4p-recipe-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font:10px Arial;color:#6d5939}.u4p-recipe-foot button,.u4p-stock-row button{font:11px Arial;padding:7px 9px}.u4p-stock-row{display:flex;justify-content:space-between;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid #dfd1b5;font:12px Arial}.u4p-stock-row small{display:block;color:#806c4e;font:10px Arial;margin-top:3px}.u4p-history{display:grid;grid-template-columns:90px 1fr;gap:8px;padding:5px 0;border-bottom:1px solid #dfd1b5;font:10px Arial;color:#74664f}.u4p-stock-note{font:10px Arial;color:#806c4e;padding:6px 8px;border:1px solid #d4c29e;border-radius:8px}.u4p-note{font:10px/1.45 Arial;color:#817258}.u4p-map-layer{position:absolute;inset:0;z-index:9;pointer-events:none}.u4p-map-item{position:absolute;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:2px;padding:3px 6px;border:1px solid #e3c78e;border-radius:8px;background:#30271ddd;color:#fff1cf;box-shadow:0 2px 7px #0006;white-space:nowrap}.u4p-map-item b{font-size:19px;line-height:1.1}.u4p-map-item small{font:9px Arial}.u4p-placement-active{outline:3px solid #d7b56f;outline-offset:-3px;cursor:crosshair!important}@media(max-width:650px){.u4p-metrics{grid-template-columns:repeat(2,1fr)}.u4p-stock-row{align-items:flex-start;flex-direction:column}}'
  ].join('');document.head.appendChild(s);
 }
 ensure();styles();
@@ -288,7 +258,7 @@ if(typeof oldScene==='function'&&!window.__uilemProductionSceneWrapped){
  window.renderScene=function(){oldScene();renderMap();};
 }
 window.UilemProduction={
- catalog:RECIPES,render,craft,transferToInterior,startPlacement,placeAt,cancelPlacement,removePlaced,
+ catalog:RECIPES,render,craft,startPlacement,placeAt,cancelPlacement,removePlaced,
  getState:()=>G.production,
  setWorker:id=>{ui.worker=id;},
  renderMap
