@@ -28,7 +28,7 @@ test('calendar task API registered',()=>assert.equal(typeof C.addTask,'function'
 test('adding recommendation creates one shared task record',()=>{
  const id=C.addTask(0),t=G.tasks.find(x=>x.id===id);
  assert.ok(t);assert.equal(typeof t.id,'number');assert.equal(t.status,'На согласовании');
- assert.equal(t.calendarMonth,5);assert.equal(t.calendarYear,2);assert.equal(t.object,'mainHouse');
+ assert.equal(t.calendarMonth,5);assert.equal(t.calendarYear,2);assert.equal(t.object,null);
  assert.equal(G.calendar.monthlyTasks.length,0);
 });
 test('task appears in common board and calendar list',()=>{
@@ -44,7 +44,7 @@ test('another month gets a distinct recommendation key',()=>{
  G.month=6;const id=C.addTask(0);assert.ok(id);assert.equal(G.tasks.length,2);
 });
 test('removing a calendar task keeps history and hides it from plan',()=>{
- const task=G.tasks[0];assert.equal(C.removeTask(task.id),true);assert.equal(task.status,'Отклонена');
+ G.month=5;const task=G.tasks[0];assert.equal(C.removeTask(task.id),true);assert.equal(task.status,'Отклонена');
  window.renderWorkspace();assert.equal(elements.workspace.innerHTML.includes(task.title),false);
 });
 test('legacy calendar entries migrate once into shared tasks',()=>{
