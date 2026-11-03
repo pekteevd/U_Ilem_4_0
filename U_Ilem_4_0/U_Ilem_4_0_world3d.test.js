@@ -15,13 +15,13 @@ const gl={
  enableVertexAttribArray(){},vertexAttribPointer(){},viewport(){},clearColor(){},clear(){},enable(){},blendFunc(){},
  drawArrays(){},disableVertexAttribArray(){},vertexAttrib4f(){},deleteBuffer(){}
 };
-const handlers={};
+const handlers={},classes=new Set();
 const canvas={id:'',style:{},width:0,height:0,getContext(){return gl;},getBoundingClientRect(){return {left:0,top:0,width:800,height:500};},addEventListener(n,fn){handlers['canvas:'+n]=fn;},setPointerCapture(){}};
 const buttonList=[];
 const tools={id:'',className:'',innerHTML:'',style:{},querySelectorAll(){return buttonList;},addEventListener(){}};
 const image={src:'',alt:'',style:{}};
 const scene={
- classList:{add(){}},style:{},children:[],
+ classList:{add(x){classes.add(x);},contains(x){return classes.has(x);},remove(x){classes.delete(x);}},style:{},children:[],
  querySelector(sel){return sel==='img'?image:null;},querySelectorAll(){return [];},
  appendChild(el){this.children.push(el);if(el.id==='uilemWorldCanvas')elements.uilemWorldCanvas=el;if(el.id==='uilemWorldTools')elements.uilemWorldTools=el;},
  getBoundingClientRect(){return {left:0,top:0,width:800,height:500};}
@@ -55,7 +55,7 @@ test('construction objects synchronize to 3D map objects',()=>assert.ok(G.mapObj
 test('workshop products synchronize to 3D map objects',()=>assert.ok(G.mapObjects.some(x=>x.id==='production_1'&&x.type==='bench')));
 test('living plants synchronize to 3D tree objects',()=>assert.ok(G.mapObjects.some(x=>x.id==='plant_7'&&x.type==='tree')));
 test('placing a new 3D object creates a game object and a linked task',()=>{
- const before=G.tasks.length;W.addAt(400,250);
+ const before=G.tasks.length;W.setMode('place');classes.add('u4p-placement-active');handlers['canvas:pointerdown']({clientX:400,clientY:250});assert.equal(G.tasks.length,before);classes.delete('u4p-placement-active');W.setMode('place');handlers['canvas:pointerdown']({clientX:400,clientY:250});
  const placed=G.mapObjects.find(x=>x.source==='player');
  assert.ok(placed);assert.ok(G.objects[placed.id]);assert.equal(G.tasks.length,before+1);assert.equal(G.tasks.at(-1).object,placed.id);
 });
