@@ -64,7 +64,7 @@ function install(){
  let W=1,H=1,mode='select',selected=null,drag=null,meshes=[];
  function project(x,y,z){return [x, y-z*.95];}
  function screen(x,y,z){const p=project(x,y,z);return [(p[0]/W)*2-1,1-(p[1]/H)*2];}
- function pushTri(out,a,b,c,color){const n=hex(color);[a,b,c].forEach(v=>{const q=screen(v[0],v[1],v[2]);out.pos.push(q[0],q[1]);out.col.push(n[0],n[1],n[2],1);});}
+ function pushTri(out,a,b,c,color,alpha){const n=hex(color);[a,b,c].forEach(v=>{const q=screen(v[0],v[1],v[2]);out.pos.push(q[0],q[1]);out.col.push(n[0],n[1],n[2],alpha===undefined?1:alpha);});}
  function quad(out,a,b,c,d,color){pushTri(out,a,b,c,color);pushTri(out,a,c,d,color);}
  function box(out,x,y,z,w,d,h,colors,rot){
   const r=(rot||0)*Math.PI/180,pt=(a,b,c)=>[x+a*Math.cos(r)-b*Math.sin(r),y+a*Math.sin(r)+b*Math.cos(r),z+c];
@@ -88,15 +88,28 @@ function install(){
    pushTri(out,pts[0],pts[1],tip,k===0?'#42683b':'#527b46');pushTri(out,pts[1],pts[2],tip,'#3c6037');pushTri(out,pts[2],pts[3],tip,'#4c7542');pushTri(out,pts[3],pts[0],tip,'#62874e');
   }
  }
+ function shadow(out,x,y,rx,ry){const center=[x,y,0],steps=12;for(let i=0;i<steps;i++){const a=i*Math.PI*2/steps,b=(i+1)*Math.PI*2/steps;pushTri(out,center,[x+Math.cos(a)*rx,y+Math.sin(a)*ry,0],[x+Math.cos(b)*rx,y+Math.sin(b)*ry,0],'#514a3d',.22);}}
  function buildObject(out,o,idx){
   const t=TYPES[normalizeType(o.type)]||TYPES.shed,x=o.x*W,y=o.y*H,s=clamp(Number(o.scale)||1,.4,2.5),z=0;
   // Ground shadow is a translucent flattened polygon, separate from the solid mesh.
   const shadow='#5c5140';
   const w=t.w*s,d=t.d*s,h=t.h*s;
   const unit=Math.min(W,H)/120; const uw=w*unit,ud=d*unit,uh=h*unit;
+  shadow(out,x+unit*.35,y+unit*.45,uw*.68,ud*.62);
   if(t.label==='Дерево'){tree(out,x,y,z,s*unit);return;}
-  box(out,x,y,z,uw,ud,uh,[t.wall,t.wall,t.wall,t.wall,shade(hex(t.wall),1.18).map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('').replace(/^/,'#')],o.rotation);
-  if(['house','bath','shed','greenhouse','gazebo','toilet','shower'].includes(normalizeType(o.type)))roof(out,x,y,uh,uw*1.12,ud*1.12,uh*.42,t.roof,o.rotation);
+  const kind=normalizeType(o.type);
+  if(['house','bath','shed','greenhouse','gazebo','toilet','shower'].includes(kind)){
+   box(out,x,y,z,uw*1.06,ud*1.06,unit*.28,['#77644d','#6a5947','#74634f','#806d56','#9b876a'],o.rotation);
+   box(out,x,y,unit*.28,uw,ud,Math.max(unit*.5,uh-unit*.28),[t.wall,t.wall,t.wall,t.wall,shade(hex(t.wall),1.18).map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('').replace(/^/,'#')],o.rotation);
+   roof(out,x,y,uh,uw*1.12,ud*1.12,uh*.42,t.roof,o.rotation);
+   if(kind==='house'||kind==='bath'){
+    box(out,x+uw*.22,y-ud*.52,unit*.38,unit*.52,unit*.14,uh*.72,['#543b2a','#543b2a','#543b2a','#543b2a','#8a603d'],o.rotation);
+    [-1,1].forEach(side=>box(out,x+side*uw*.24,y-ud*.535,uh*.45,unit*.48,unit*.12,unit*.48,['#514638','#514638','#514638','#514638','#9db6b1'],o.rotation));
+    box(out,x-uw*.28,y+ud*.08,uh+unit*.3,unit*.35,unit*.35,unit*.9,['#8b806d','#776b5b','#827664','#938674','#a69a86'],o.rotation);
+   }
+  } else {
+   box(out,x,y,z,uw,ud,uh,[t.wall,t.wall,t.wall,t.wall,shade(hex(t.wall),1.18).map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('').replace(/^/,'#')],o.rotation);
+  }
   if(normalizeType(o.type)==='bench'){
    box(out,x,y,z+.7*s,uw,ud*.28,.22*unit,['#71472b','#805432','#71472b','#805432','#a06d3e'],o.rotation);
    box(out,x,y,z+.25*s,uw*.9,ud*.22,.18*unit,['#71472b','#805432','#71472b','#805432','#a06d3e'],o.rotation);
