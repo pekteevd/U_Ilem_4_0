@@ -29,27 +29,21 @@ jobs:
           node --check U_Ilem_4_0_map_ui.test.js
       - name: Production tests
         id: production
-        continue-on-error: true
         run: cd U_Ilem_4_0 && node U_Ilem_4_0_production.test.js
       - name: Calendar and task integration tests
         id: calendar
-        continue-on-error: true
         run: cd U_Ilem_4_0 && node U_Ilem_4_0_calendar_tasks.test.js
       - name: Map and selected-object tests
         id: map
-        continue-on-error: true
         run: cd U_Ilem_4_0 && node U_Ilem_4_0_map_ui.test.js
       - name: Water tests
         id: water
-        continue-on-error: true
         run: cd U_Ilem_4_0 && node U_Ilem_4_0_water.test.js
       - name: Ecology tests
         id: ecology
-        continue-on-error: true
         run: cd U_Ilem_4_0 && node U_Ilem_4_0_ecology.test.js
       - name: Construction tests
         id: construction
-        continue-on-error: true
         run: cd U_Ilem_4_0 && node U_Ilem_4_0_construction.test.js
       - name: Extract inline scripts and styles for review
         if: always()
@@ -98,15 +92,3 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add U_Ilem_4_0/.audit_extract
           git diff --cached --quiet || (git commit -m "Refresh temporary base source audit extract" && git push origin HEAD:fix/audit-2026-11-03)
-      - name: Enforce test results
-        if: always()
-        env:
-          PRODUCTION: ${{ steps.production.outcome }}
-          CALENDAR: ${{ steps.calendar.outcome }}
-          WATER: ${{ steps.water.outcome }}
-          ECOLOGY: ${{ steps.ecology.outcome }}
-          CONSTRUCTION: ${{ steps.construction.outcome }}
-          MAP: ${{ steps.map.outcome }}
-        run: |
-          echo "production=$PRODUCTION calendar=$CALENDAR map=$MAP water=$WATER ecology=$ECOLOGY construction=$CONSTRUCTION"
-          if [[ "$PRODUCTION" != "success" || "$CALENDAR" != "success" || "$MAP" != "success" || "$WATER" != "success" || "$ECOLOGY" != "success" || "$CONSTRUCTION" != "success" ]]; then exit 1; fi
