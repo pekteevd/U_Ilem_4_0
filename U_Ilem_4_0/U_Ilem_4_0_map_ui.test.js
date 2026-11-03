@@ -67,7 +67,7 @@ test('saving a new stage stores the selected object id',()=>{
  const id=window.ilemSaveNewStage('mainHouse');
  const s=G.stages.find(x=>x.id===id);
  assert.ok(s);assert.equal(s.object,'mainHouse');assert.equal(s.title,'Покрасить дверь');
- assert.equal(s.hours,5);assert.equal(s.cost,1200);assert.equal(s.skill,2);assert.deepEqual(s.need.map(x=>Array.from(x)),[['Доска',2],['Краска',1]]);
+ assert.equal(s.hours,5);assert.equal(s.cost,1200);assert.equal(s.skill,2);assert.equal(JSON.stringify(s.need),JSON.stringify([['Доска',2],['Краска',1]]));
 });
 test('object work filter excludes other buildings',()=>{
  window.ilemShowObjectWorks('mainHouse');
@@ -92,4 +92,4 @@ test('moving sweep animation is disabled without removing the map',()=>{
  assert.ok(css.includes('.scene:after'));
 });
 if(process.exitCode)process.exit(process.exitCode);
-process.stdout.write('Map and object-work integration: '+checks+'/8 checks passed. Saves: '+saves+'.\n');
+process.stdout.write('Map and object-work integration: '+checks+'/9 checks passed. Saves: '+saves+'.\n');
