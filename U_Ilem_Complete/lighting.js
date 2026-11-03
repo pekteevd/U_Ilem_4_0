@@ -14,7 +14,7 @@
   const rub = n => Math.round(n || 0).toLocaleString('ru-RU') + ' ₽';
   const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function ensure(){
-    if(!window.G || typeof G!=='object') return false;
+    if(typeof G==='undefined' || !G || typeof G!=='object') return false;
     if(!G.lighting || typeof G.lighting!=='object') G.lighting=defaults();
     const d=defaults(); Object.keys(d).forEach(k=>{if(G.lighting[k]===undefined)G.lighting[k]=d[k]});
     if(!Array.isArray(G.lighting.stock))G.lighting.stock=[];
@@ -128,6 +128,19 @@
       workspace();return;
     }
     oldWorkspace();
+  };
+  const oldNextMonth=window.nextMonth;
+  if(typeof oldNextMonth==='function')window.nextMonth=function(){
+    const month=G.month;oldNextMonth();
+    if(G.month!==month&&G.lighting.source==='grid'){
+      const watts=G.lighting.installed.reduce((n,x)=>n+x.watts,0);
+      const bill=watts*8*30/1000*G.lighting.tariff;
+      if(bill>0){
+        if(G.cash>=bill){G.cash-=bill;log('Электроэнергия освещения: '+rub(bill));}
+        else{G.lighting.enabled=false;G.lighting.mode='off';log('Не хватило денег на оплату освещения. Свет отключён.');}
+        save();render();
+      }
+    }
   };
   const oldScene=window.renderScene;window.renderScene=function(){oldScene();overlay()};
   const oldRender=window.render;window.render=function(){oldRender();overlay()};
