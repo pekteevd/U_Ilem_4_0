@@ -11,6 +11,7 @@ function createHarness(){
   const document={
     getElementById(id){return elements[id]||null;},
     querySelector(){return null;},
+    addEventListener(){},
     createElement(tag){return {tagName:tag,style:{},dataset:{},textContent:'',appendChild(){},after(){},setAttribute(){},querySelector(){return null;},querySelectorAll(){return[];}};},
     head:{appendChild(){}},
     documentElement:{appendChild(){}}
