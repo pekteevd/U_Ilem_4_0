@@ -174,7 +174,7 @@ function openTaskPurchase(id){
  const rows=taskShortages(t),total=rows.reduce((sum,x)=>sum+x.missing*x.price,0);
  if(!rows.length){tell('Все материалы для задачи уже есть на складе.');return false;}
  const html='<h2>Закупка для задачи</h2><p><b>'+h(t.title)+'</b></p>'+rows.map(x=>'<div class="row"><span>'+h(x.name)+'<br><small>Нужно '+x.qty+' '+h(x.unit)+', есть '+x.have+', докупить '+x.missing+'</small></span><b>'+money(x.missing*x.price)+'</b></div>').join('')+
- '<div class="tile"><small>Общая стоимость закупки</small><b>'+money(total)+'</b><small>Доступно: '+money(G.cash)+'</small></div><div class="actions"><button onclick="closeModal()">Отмена</button><button onclick="ilemConfirmTaskPurchase(\\''+h(String(t.id))+'\\')">Подтвердить закупку</button></div>';
+ '<div class="tile"><small>Общая стоимость закупки</small><b>'+money(total)+'</b><small>Доступно: '+money(G.cash)+'</small></div><div class="actions"><button onclick="closeModal()">Отмена</button><button onclick="ilemConfirmTaskPurchase(\''+h(String(t.id))+'\')">Подтвердить закупку</button></div>';
  if(typeof window.modal==='function')window.modal(html);else if(typeof modal==='function')modal(html);return true;
 }
 function confirmTaskPurchase(id){
