@@ -11,6 +11,7 @@ const ROOT = __dirname;
 const MAIN_HTML = path.join(ROOT, 'U_Ilem_4_0.html');
 const LIGHTING_JS = 'U_Ilem_4_0_lighting.js';
 const INTERIORS_JS = 'U_Ilem_4_0_interiors.js';
+const ECOLOGY_JS = 'U_Ilem_4_0_ecology.js';
 const MODEL = 'qwen3:4b';
 const OLLAMA = 'http://127.0.0.1:11434';
 
@@ -214,7 +215,8 @@ async function handler(req, res) {
 
         const moduleTags = [
           '<script src="/' + LIGHTING_JS + '"></script>',
-          '<script src="/' + INTERIORS_JS + '"></script>'
+          '<script src="/' + INTERIORS_JS + '"></script>',
+          '<script src="/' + ECOLOGY_JS + '"></script>'
         ];
         for (const tag of moduleTags) {
           if (!html.includes(tag)) {

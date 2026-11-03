@@ -36,6 +36,11 @@ if not exist "%~dp0U_Ilem_4_0_interiors.js" (
     pause
     exit /b 1
 )
+if not exist "%~dp0U_Ilem_4_0_ecology.js" (
+    echo ERROR: U_Ilem_4_0_ecology.js was not found.
+    pause
+    exit /b 1
+)
 
 powershell -NoProfile -Command "try { $r=Invoke-WebRequest -UseBasicParsing -TimeoutSec 1 'http://127.0.0.1:4320/api/health'; if ($r.StatusCode -eq 200) { exit 0 } else { exit 1 } } catch { exit 1 }" >nul 2>&1
 if errorlevel 1 (
