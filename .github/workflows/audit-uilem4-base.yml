@@ -104,9 +104,9 @@ jobs:
             fs.mkdirSync(imageDir, { recursive: true });
             const base64 = approvedImageMatch[1];
             const parts = [];
-            for (let start = 0, index = 1; start < base64.length; start += 120000, index++) {
+            for (let start = 0, index = 1; start < base64.length; start += 250000, index++) {
               const name = 'part-' + String(index).padStart(2,'0') + '.txt';
-              fs.writeFileSync(path.join(imageDir, name), base64.slice(start, start + 120000));
+              fs.writeFileSync(path.join(imageDir, name), base64.slice(start, start + 250000));
               parts.push(name);
             }
             fs.writeFileSync(path.join(imageDir, 'manifest.json'), JSON.stringify({ mime:'image/png', base64Length:base64.length, parts }, null, 2));
