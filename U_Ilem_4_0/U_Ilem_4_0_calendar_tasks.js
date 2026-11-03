@@ -39,7 +39,7 @@ function migrateLegacy(){
   if(G.tasks.some(t=>t.calendarKey===key))return;
   G.tasks.push({
    id:nextId(),title,person:String(item.person||G.people?.[0]?.name||'Дмитрий'),
-   object:item.object||G.selected||null,hours:Math.max(.1,Number(item.hours)||1),
+   object:item.object||null,hours:Math.max(.1,Number(item.hours)||1),
    status:item.status||'На согласовании',source:'Календарь · перенос старого плана',
    actions:[{title,done:false}],purchases:[],priority:item.priority||'Плановый',
    calendarKey:key,calendarMonth:month(),calendarYear:year(),calendarSeason:item.season||season(),
@@ -64,7 +64,7 @@ function addTask(index){
  }
  const task={
   id:nextId(),title,person:String(G.people?.[0]?.name||'Дмитрий'),
-  object:G.objects&&G.objects[G.selected]?G.selected:null,
+  object:null,
   hours:1,status:'На согласовании',
   source:'Календарь · сезонная рекомендация · '+season(),
   actions:[{title,done:false}],purchases:[],priority:'Плановый',notes:'',
