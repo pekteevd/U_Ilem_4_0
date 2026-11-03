@@ -97,7 +97,6 @@ function install(){
  function buildObject(out,o,idx){
   const t=TYPES[normalizeType(o.type)]||TYPES.shed,x=o.x*W,y=o.y*H,s=clamp(Number(o.scale)||1,.4,2.5),z=0;
   // Ground shadow is a translucent flattened polygon, separate from the solid mesh.
-  const shadow='#5c5140';
   const w=t.w*s,d=t.d*s,h=t.h*s;
   const unit=Math.min(W,H)/120; const uw=w*unit,ud=d*unit,uh=h*unit;
   shadow(out,x+unit*.35,y+unit*.45,uw*.68,ud*.62);
