@@ -59,9 +59,10 @@ test('placing a new 3D object creates a game object and a linked task',()=>{
  const placed=G.mapObjects.find(x=>x.source==='player');
  assert.ok(placed);assert.ok(G.objects[placed.id]);assert.equal(G.tasks.length,before+1);assert.equal(G.tasks.at(-1).object,placed.id);
 });
+test('map toolbar exposes select, placement, movement, rotation, scale and edit modes',()=>{const html=elements.uilemWorldTools.innerHTML;['data-mode="select"','data-mode="place"','data-mode="move"','data-action="rotate"','data-action="scaleUp"','data-action="edit"'].forEach(x=>assert.ok(html.includes(x)));});
 test('object editor exposes name and type controls',()=>{
  const o=G.mapObjects[0];assert.equal(W.edit(o.id),true);assert.ok(modalHtml.includes('uilemMapObjectName'));assert.ok(modalHtml.includes('uilemMapObjectType'));
 });
 test('rendering saves and draws without a runtime exception',()=>{W.draw();assert.ok(saves>=1);});
 if(process.exitCode)process.exit(process.exitCode);
-process.stdout.write('WebGL map and object integration: '+checks+'/7 checks passed. Saves: '+saves+'.\n');
+process.stdout.write('WebGL map and object integration: '+checks+'/8 checks passed. Saves: '+saves+'.\n');
