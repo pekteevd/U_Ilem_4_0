@@ -5,7 +5,10 @@ const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'U_Ilem_4_0_map_ui.js'),'utf8');
 const buttons=[{textContent:'Выполнить этап'},{textContent:'Все работы',onclick:null}];
+const mapButtons=[{textContent:'＋ Строить · участок 2',onclick:null},{textContent:'＋ Строить · участок 3',onclick:null}];
 const elements={
+ scene:{appendChild(el){elements[el.id]=el;}},
+ plotControls:{querySelectorAll(){return mapButtons;},innerHTML:''},
  objectDetail:{innerHTML:'',querySelectorAll(){return buttons;}},
  workspace:{innerHTML:''},
  ilemNewStageTitle:{value:'Покрасить дверь'},
@@ -33,7 +36,7 @@ const G={
 let modalHtml='',workspaceCalls=0,renderCalls=0,saves=0;
 const window={
  renderWorkspace(){workspaceCalls++;},setTab(t){G.tab=t;this.renderWorkspace();},
- renderObject(){elements.objectDetail.innerHTML='object';},modal(html){modalHtml=html;},
+ renderObject(){elements.objectDetail.innerHTML='object';},modal(html){modalHtml=html;},choosePlot(plot){G.lastChosenPlot=plot;},
  executeStage(){},render(){renderCalls++;}
 };
 const context={G,window,document,save(){saves++;},toast(){},log(){},render(){renderCalls++;},closeModal(){},Date,Math,Number,String,Array,Object,JSON};
@@ -42,6 +45,7 @@ const U=window.UilemMapUI;
 let checks=0;
 function test(name,fn){try{fn();checks++;process.stdout.write('PASS '+checks+' - '+name+'\n');}catch(e){process.stderr.write('FAIL - '+name+': '+e.message+'\n');process.exitCode=1;}}
 test('map UI API registered',()=>assert.equal(typeof U.openObjectStages,'function'));
+test('map construction buttons are rebound to plot selection',()=>{assert.equal(typeof mapButtons[0].onclick,'function');mapButtons[0].onclick({preventDefault(){}});assert.equal(G.lastChosenPlot,2);});
 test('object stage manager only lists selected object stages',()=>{
  window.openStage('mainHouse');
  assert.ok(modalHtml.includes('Починить крыльцо'));
