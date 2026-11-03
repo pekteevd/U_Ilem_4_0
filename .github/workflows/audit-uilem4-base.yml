@@ -1,4 +1,4 @@
-name: Inspect 4.0 base and run module tests
+name: Verify 4.0 modules and inspect base
 on:
   push:
     branches:
@@ -17,7 +17,7 @@ jobs:
         with:
           ref: fix/audit-2026-11-03
           fetch-depth: 1
-      - name: Run module syntax checks and tests
+      - name: Syntax checks
         run: |
           cd U_Ilem_4_0
           node --check U_Ilem_4_0_server.js
@@ -25,12 +25,28 @@ jobs:
           node --check U_Ilem_4_0_production.test.js
           node --check U_Ilem_4_0_calendar_tasks.js
           node --check U_Ilem_4_0_calendar_tasks.test.js
-          node U_Ilem_4_0_production.test.js
-          node U_Ilem_4_0_calendar_tasks.test.js
-          node U_Ilem_4_0_water.test.js
-          node U_Ilem_4_0_ecology.test.js
-          node U_Ilem_4_0_construction.test.js
+      - name: Production tests
+        id: production
+        continue-on-error: true
+        run: cd U_Ilem_4_0 && node U_Ilem_4_0_production.test.js
+      - name: Calendar and task integration tests
+        id: calendar
+        continue-on-error: true
+        run: cd U_Ilem_4_0 && node U_Ilem_4_0_calendar_tasks.test.js
+      - name: Water tests
+        id: water
+        continue-on-error: true
+        run: cd U_Ilem_4_0 && node U_Ilem_4_0_water.test.js
+      - name: Ecology tests
+        id: ecology
+        continue-on-error: true
+        run: cd U_Ilem_4_0 && node U_Ilem_4_0_ecology.test.js
+      - name: Construction tests
+        id: construction
+        continue-on-error: true
+        run: cd U_Ilem_4_0 && node U_Ilem_4_0_construction.test.js
       - name: Extract inline scripts and styles for review
+        if: always()
         run: |
           node <<'NODE'
           const fs = require('node:fs');
@@ -70,8 +86,20 @@ jobs:
           console.log('Extracted', scripts.length, 'inline scripts and', styles.length, 'style blocks.');
           NODE
       - name: Commit extracted source for review
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add U_Ilem_4_0/.audit_extract
           git diff --cached --quiet || (git commit -m "Refresh temporary base source audit extract" && git push origin HEAD:fix/audit-2026-11-03)
+      - name: Enforce test results
+        if: always()
+        env:
+          PRODUCTION: ${{ steps.production.outcome }}
+          CALENDAR: ${{ steps.calendar.outcome }}
+          WATER: ${{ steps.water.outcome }}
+          ECOLOGY: ${{ steps.ecology.outcome }}
+          CONSTRUCTION: ${{ steps.construction.outcome }}
+        run: |
+          echo "production=$PRODUCTION calendar=$CALENDAR water=$WATER ecology=$ECOLOGY construction=$CONSTRUCTION"
+          test "$PRODUCTION" = "success" -a "$CALENDAR" = "success" -a "$WATER" = "success" -a "$ECOLOGY" = "success" -a "$CONSTRUCTION" = "success"
