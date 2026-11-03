@@ -98,19 +98,12 @@ jobs:
           }
           const baseImages = imageStats(html);
           const approvedImages = imageStats(approved);
-          const approvedImageMatch = approved.match(/data:image\/png;base64,([A-Za-z0-9+/=]+)/);
-          if (approvedImageMatch) {
-            const imageDir = path.join(dir, 'approved-map-image');
-            fs.mkdirSync(imageDir, { recursive: true });
-            const base64 = approvedImageMatch[1];
-            const parts = [];
-            for (let start = 0, index = 1; start < base64.length; start += 250000, index++) {
-              const name = 'part-' + String(index).padStart(2,'0') + '.txt';
-              fs.writeFileSync(path.join(imageDir, name), base64.slice(start, start + 250000));
-              parts.push(name);
-            }
-            fs.writeFileSync(path.join(imageDir, 'manifest.json'), JSON.stringify({ mime:'image/png', base64Length:base64.length, parts }, null, 2));
-          }
+          const baseImageMatch = html.match(/data:image\\/png;base64,([A-Za-z0-9+/=]+)/);
+          const approvedImageMatch = approved.match(/data:image\\/png;base64,([A-Za-z0-9+/=]+)/);
+          const imageDir = path.join(dir, 'map-images');
+          fs.mkdirSync(imageDir, { recursive: true });
+          if (baseImageMatch) fs.writeFileSync(path.join(imageDir, 'base-map.png'), Buffer.from(baseImageMatch[1], 'base64'));
+          if (approvedImageMatch) fs.writeFileSync(path.join(imageDir, 'approved-map.png'), Buffer.from(approvedImageMatch[1], 'base64'));
           const baseHashes = new Set(baseImages.map(x => x.sha256));
           const approvedHashes = new Set(approvedImages.map(x => x.sha256));
           fs.writeFileSync(path.join(dir, 'map-assets.json'), JSON.stringify({
@@ -121,6 +114,13 @@ jobs:
           }, null, 2));
           console.log('Extracted', scripts.length, 'inline scripts and', styles.length, 'style blocks. Compared embedded images with approved map.');
           NODE
+      - name: Create small map previews
+        if: always()
+        run: |
+          ffmpeg -y -i U_Ilem_4_0/.audit_extract/map-images/base-map.png -vf "scale=1100:-1" -q:v 8 U_Ilem_4_0/.audit_extract/map-images/base-map-preview.jpg
+          ffmpeg -y -i U_Ilem_4_0/.audit_extract/map-images/approved-map.png -vf "scale=1100:-1" -q:v 8 U_Ilem_4_0/.audit_extract/map-images/approved-map-preview.jpg
+          base64 -w0 U_Ilem_4_0/.audit_extract/map-images/base-map-preview.jpg > U_Ilem_4_0/.audit_extract/map-images/base-map-preview-base64.txt
+          base64 -w0 U_Ilem_4_0/.audit_extract/map-images/approved-map-preview.jpg > U_Ilem_4_0/.audit_extract/map-images/approved-map-preview-base64.txt
       - name: Commit extracted source for review
         if: always()
         run: |
