@@ -21,6 +21,11 @@ if not exist "%~dp0U_Ilem_4_0.html" (
     pause
     exit /b 1
 )
+if not exist "%~dp0U_Ilem_4_0_base.html" (
+    echo ERROR: U_Ilem_4_0_base.html was not found.
+    pause
+    exit /b 1
+)
 if not exist "%~dp0U_Ilem_4_0_server.js" (
     echo ERROR: U_Ilem_4_0_server.js was not found.
     pause
@@ -62,7 +67,7 @@ for /l %%i in (1,1,30) do (
 :OPEN_GAME
 if "%READY%"=="1" (
     echo Server is ready. Opening game...
-    start "" "http://127.0.0.1:4320"
+    start "" "http://127.0.0.1:4320/U_Ilem_4_0.html"
     echo.
     echo Keep the server window open while playing.
 ) else (

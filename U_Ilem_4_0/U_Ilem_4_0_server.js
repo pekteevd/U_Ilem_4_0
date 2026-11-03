@@ -8,7 +8,8 @@ const path = require('path');
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.UILEM_PORT || 4320);
 const ROOT = __dirname;
-const MAIN_HTML = path.join(ROOT, 'U_Ilem_4_0.html');
+const MAIN_HTML = path.join(ROOT, 'U_Ilem_4_0_base.html');
+const LAUNCHER_HTML = path.join(ROOT, 'U_Ilem_4_0.html');
 const LIGHTING_JS = 'U_Ilem_4_0_lighting.js';
 const INTERIORS_JS = 'U_Ilem_4_0_interiors.js';
 const ECOLOGY_JS = 'U_Ilem_4_0_ecology.js';
@@ -183,8 +184,9 @@ async function handler(req, res) {
     return sendJson(res, 400, { error: 'Invalid path encoding' });
   }
 
-  const isMain = pathname === '/' || pathname === '/U_Ilem_4_0.html';
-  const filePath = isMain ? MAIN_HTML : safeStaticPath(pathname);
+  const isLauncher = pathname === '/' || pathname === '/U_Ilem_4_0.html';
+  const isGame = pathname === '/__game';
+  const filePath = isLauncher ? LAUNCHER_HTML : isGame ? MAIN_HTML : safeStaticPath(pathname);
   if (!filePath) return sendJson(res, 403, { error: 'Path is not allowed' });
 
   fs.stat(filePath, (statError, stat) => {
@@ -194,18 +196,35 @@ async function handler(req, res) {
 
     const type = MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
 
-    if (isMain) {
+    if (isLauncher) {
+      if (req.method === 'HEAD') {
+        res.writeHead(200, {'Content-Type': MIME['.html'], 'Cache-Control': 'no-store'});
+        return res.end();
+      }
+      res.writeHead(200, {
+        'Content-Type': MIME['.html'],
+        'Content-Length': stat.size,
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'no-referrer'
+      });
+      fs.createReadStream(LAUNCHER_HTML).pipe(res);
+      return;
+    }
+
+    if (isGame) {
       fs.readFile(MAIN_HTML, (readError, buffer) => {
-        if (readError) return sendJson(res, 500, { error: 'Cannot read main game file' });
+        if (readError) return sendJson(res, 500, { error: 'Cannot read version 4.0 base game file' });
         let html = buffer.toString('utf8');
 
-        // 3.2 is kept as the source file; the served game is version 4.0.
+        // The base copy remains untouched. The server assembles the running 4.0 page.
         html = html.replace('<title>У Илем 3.2 | Живая усадьба</title>',
           '<title>У Илем 4.0 | Живая усадьба</title>');
         html = html.replace('<span style="color:#e5bd70">3.0</span>',
           '<span style="color:#e5bd70">4.0</span>');
+        html = html.replace('href="U_Ilem.ico"', 'href="/U_Ilem_4_0.ico"');
 
-        // Read a 3.x save as migration input once; all subsequent writes use uilem4save.
+        // A 3.x save is migration input only; version 4.0 writes to uilem4save.
         html = html.replace(
           "G=JSON.parse(localStorage.getItem('uilem3save'))||fresh()",
           "G=JSON.parse(localStorage.getItem('uilem4save'))||JSON.parse(localStorage.getItem('uilem3save'))||fresh()"
@@ -224,10 +243,6 @@ async function handler(req, res) {
             if (bodyIndex >= 0) html = html.slice(0, bodyIndex) + tag + html.slice(bodyIndex);
             else html += tag;
           }
-        }
-        const iconTag = '<link rel="icon" href="/U_Ilem_4_0.ico" type="image/x-icon">';
-        if (!/rel=["']icon["']/i.test(html) && /<\/head\s*>/i.test(html)) {
-          html = html.replace(/<\/head\s*>/i, iconTag + '</head>');
         }
         const output = Buffer.from(html, 'utf8');
         res.writeHead(200, {
