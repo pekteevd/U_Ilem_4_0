@@ -244,6 +244,16 @@ async function handler(req, res) {
         }
         html = html.slice(0, sceneSrcStart + 5) + approvedMap[1] + html.slice(sceneSrcEnd);
 
+        // Remove the old duplicate map click handlers. The repairs module installs one
+        // capture-phase router that accounts for the transformed camera layer.
+        const legacyMapHandlerStart = html.indexOf('  // A single delegated handler supports original and dynamically-created map markers.');
+        const legacyMapHandlerEnd = html.indexOf('  // Repair and redraw once after all compatibility fields have been normalized.', legacyMapHandlerStart);
+        if (legacyMapHandlerStart >= 0 && legacyMapHandlerEnd > legacyMapHandlerStart) {
+          html = html.slice(0, legacyMapHandlerStart) +
+            '  // Map click routing is installed by U_Ilem_4_0_repairs.js.\\n' +
+            html.slice(legacyMapHandlerEnd);
+        }
+
         // The base copy remains untouched. The server assembles the running 4.0 page.
         html = html.replace('<title>У Илем 3.2 | Живая усадьба</title>',
           '<title>У Илем 4.0 | Живая усадьба</title>');
