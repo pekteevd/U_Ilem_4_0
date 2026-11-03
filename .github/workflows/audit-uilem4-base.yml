@@ -117,8 +117,16 @@ jobs:
       - name: Create small map previews
         if: always()
         run: |
-          ffmpeg -y -i U_Ilem_4_0/.audit_extract/map-images/base-map.png -vf "scale=1100:-1" -q:v 8 U_Ilem_4_0/.audit_extract/map-images/base-map-preview.jpg
-          ffmpeg -y -i U_Ilem_4_0/.audit_extract/map-images/approved-map.png -vf "scale=1100:-1" -q:v 8 U_Ilem_4_0/.audit_extract/map-images/approved-map-preview.jpg
+          python3 -m pip install --quiet pillow
+          python3 <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          root = Path('U_Ilem_4_0/.audit_extract/map-images')
+          for name in ('base-map', 'approved-map'):
+              image = Image.open(root / (name + '.png')).convert('RGB')
+              image.thumbnail((1100, 1100))
+              image.save(root / (name + '-preview.jpg'), 'JPEG', quality=78, optimize=True)
+          PY
           base64 -w0 U_Ilem_4_0/.audit_extract/map-images/base-map-preview.jpg > U_Ilem_4_0/.audit_extract/map-images/base-map-preview-base64.txt
           base64 -w0 U_Ilem_4_0/.audit_extract/map-images/approved-map-preview.jpg > U_Ilem_4_0/.audit_extract/map-images/approved-map-preview-base64.txt
       - name: Commit extracted source for review
