@@ -123,6 +123,8 @@ window.ilemAddCalendarTask=function(i){
 };
 window.ilemCreateCalendarTask=function(){const title=prompt('Название сезонной задачи');if(title)addCalendarTask(title,season());};
 window.ilemRemoveCalendarTask=removeCalendarTask;
+const oldOpenTaskReview=window.openTaskReview;
+if(typeof oldOpenTaskReview==='function')window.openTaskReview=function(id){if(!arr('tasks').some(t=>String(t.id)===String(id))){toastMsg('Задача не найдена.');return;}return oldOpenTaskReview(id);};
 window.UilemRepairs={calendarRecords,addCalendarTask,removeCalendarTask,openObjectStages,openStageById};
 if(typeof renderLiveTasks==='function')renderLiveTasks();
 })();
