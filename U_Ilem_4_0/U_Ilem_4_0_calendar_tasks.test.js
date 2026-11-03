@@ -33,8 +33,7 @@ test('adding recommendation creates one shared task record',()=>{
 });
 test('task appears in common board and calendar list',()=>{
  assert.ok(boardRenders>0);assert.ok(taskRenders>0);window.renderWorkspace();
- assert.ok(elements.workspace.innerHTML.includes('Осмотр сада после зимы')===false);
- assert.ok(elements.workspace.innerHTML.includes('В план')===false);
+ assert.ok(elements.workspace.innerHTML.includes('ilemAddCalendarTask(0)')===false);
  assert.ok(elements.workspace.innerHTML.includes('План месяца'));
  assert.ok(elements.workspace.innerHTML.includes('Осмотр сада после зимы'));
 });
