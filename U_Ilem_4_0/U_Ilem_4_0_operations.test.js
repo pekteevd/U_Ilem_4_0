@@ -34,6 +34,14 @@ assert.ok(task,'defect creates a shared task');
 assert.equal(task.object,'mainHouse','defect task keeps object link');
 assert.equal(task.defectId,G.defects[0].id,'task keeps defect link');
 assert.equal(task.purchases[0].qty,2,'defect materials move to task procurement');
+window.editDefect(G.defects[0].id);
+assert.match(modalHtml,/Изменить дефект/,'defect edit form opens');
+elements.defectTitle.value='Трещина у входа';
+elements.defectDescription.value='Трещина у северного входа';
+window.saveDefect();
+assert.equal(G.defects[0].title,'Трещина у входа','defect can be edited');
+assert.equal(task.title,'Устранить дефект: Трещина у входа','linked task title follows defect edits');
+assert.equal(task.purchases[0].qty,2,'linked task procurement remains synchronized');
 
 G.tasks.push(
  {id:10,title:'Крыльцо',status:'Запланирована',purchases:[{name:'Доска',qty:5,unit:'шт',price:100}]},
