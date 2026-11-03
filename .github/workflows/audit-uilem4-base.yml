@@ -25,8 +25,8 @@ jobs:
           const dir = 'U_Ilem_4_0/.audit_extract';
           fs.rmSync(dir, { recursive: true, force: true });
           fs.mkdirSync(dir, { recursive: true });
-          const scripts = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script\\s*>/gi)]
-            .filter(m => !/\\bsrc\\s*=/.test(m[1]));
+          const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)]
+            .filter(m => !/\bsrc\s*=/.test(m[1]));
           const manifest = [];
           let index = 0;
           for (const match of scripts) {
