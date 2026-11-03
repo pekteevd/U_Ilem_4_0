@@ -1,4 +1,4 @@
-name: Inspect 4.0 base scripts
+name: Inspect 4.0 base and run module tests
 on:
   push:
     branches:
@@ -6,17 +6,31 @@ on:
     paths:
       - .github/workflows/audit-uilem4-base.yml
       - U_Ilem_4_0/U_Ilem_4_0_base.html
+      - U_Ilem_4_0/U_Ilem_4_0_*.js
 permissions:
   contents: write
 jobs:
-  extract:
+  verify-and-extract:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/audit-2026-11-03
           fetch-depth: 1
-      - name: Extract inline scripts into reviewable chunks
+      - name: Run module syntax checks and tests
+        run: |
+          cd U_Ilem_4_0
+          node --check U_Ilem_4_0_server.js
+          node --check U_Ilem_4_0_production.js
+          node --check U_Ilem_4_0_production.test.js
+          node --check U_Ilem_4_0_calendar_tasks.js
+          node --check U_Ilem_4_0_calendar_tasks.test.js
+          node U_Ilem_4_0_production.test.js
+          node U_Ilem_4_0_calendar_tasks.test.js
+          node U_Ilem_4_0_water.test.js
+          node U_Ilem_4_0_ecology.test.js
+          node U_Ilem_4_0_construction.test.js
+      - name: Extract inline scripts and styles for review
         run: |
           node <<'NODE'
           const fs = require('node:fs');
@@ -25,37 +39,39 @@ jobs:
           const dir = 'U_Ilem_4_0/.audit_extract';
           fs.rmSync(dir, { recursive: true, force: true });
           fs.mkdirSync(dir, { recursive: true });
-          const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)]
-            .filter(m => !/\bsrc\s*=/.test(m[1]));
-          const manifest = [];
-          let index = 0;
-          for (const match of scripts) {
-            const body = match[2];
-            if (!body.trim()) continue;
-            index++;
-            const bytes = Buffer.from(body, 'utf8');
-            const parts = [];
-            let start = 0;
-            let part = 0;
-            while (start < bytes.length) {
-              let end = Math.min(start + 70000, bytes.length);
-              while (end < bytes.length && (bytes[end] & 0xc0) === 0x80) end--;
-              if (end <= start) end = Math.min(start + 70000, bytes.length);
-              const name = 'script-' + String(index).padStart(2,'0') + '-part-' + String(++part).padStart(2,'0') + '.js.txt';
-              fs.writeFileSync(path.join(dir, name), bytes.subarray(start, end));
-              parts.push(name);
-              start = end;
+          function extract(matches, prefix, extension) {
+            const manifest = [];
+            let index = 0;
+            for (const match of matches) {
+              const body = match[2];
+              if (!body.trim()) continue;
+              index++;
+              const bytes = Buffer.from(body, 'utf8');
+              const parts = [];
+              let start = 0, part = 0;
+              while (start < bytes.length) {
+                let end = Math.min(start + 70000, bytes.length);
+                while (end < bytes.length && (bytes[end] & 0xc0) === 0x80) end--;
+                if (end <= start) end = Math.min(start + 70000, bytes.length);
+                const name = prefix + '-' + String(index).padStart(2,'0') + '-part-' + String(++part).padStart(2,'0') + extension;
+                fs.writeFileSync(path.join(dir, name), bytes.subarray(start, end));
+                parts.push(name);
+                start = end;
+              }
+              manifest.push({ index, bytes: bytes.length, parts });
             }
-            manifest.push({ index, bytes: bytes.length, parts });
+            return manifest;
           }
+          const scripts = extract([...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)].filter(m => !/\bsrc\s*=/.test(m[1])), 'script', '.js.txt');
+          const styles = extract([...html.matchAll(/<style\b([^>]*)>([\s\S]*?)<\/style\s*>/gi)], 'style', '.css.txt');
           fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify({
-            htmlBytes: Buffer.byteLength(html), inlineScriptCount: scripts.length, scripts: manifest
+            htmlBytes: Buffer.byteLength(html), scripts, styles
           }, null, 2));
-          console.log('Extracted', manifest.length, 'inline scripts from base HTML.');
+          console.log('Extracted', scripts.length, 'inline scripts and', styles.length, 'style blocks.');
           NODE
       - name: Commit extracted source for review
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add U_Ilem_4_0/.audit_extract
-          git diff --cached --quiet || (git commit -m "Add temporary base-script audit extract" && git push origin HEAD:fix/audit-2026-11-03)
+          git diff --cached --quiet || (git commit -m "Refresh temporary base source audit extract" && git push origin HEAD:fix/audit-2026-11-03)
