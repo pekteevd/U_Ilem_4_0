@@ -84,8 +84,10 @@ test('placed product can be returned to workshop stock',()=>{
  assert.equal(G.production.placed.length,0);assert.ok(G.production.stock.some(x=>x.recipeId==='bench'));
 });
 test('indoor furniture cannot be placed directly on map',()=>{
- const good=G.production.stock.find(x=>x.recipeId==='flowerBox');
- assert.ok(good);assert.equal(P.startPlacement(good.id),true);
+ G.inventory.find(x=>x.name==='Доска').qty=12;
+ assert.equal(P.craft('chair'),true);
+ const good=G.production.stock.find(x=>x.recipeId==='chair');
+ assert.ok(good);assert.equal(P.startPlacement(good.id),false);
 });
 test('history and save hooks are used',()=>{assert.ok(G.production.history.length>=4);assert.ok(saves>=5);});
 if(process.exitCode)process.exit(process.exitCode);

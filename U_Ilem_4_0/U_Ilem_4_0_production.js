@@ -17,7 +17,7 @@ const RECIPES=[
  {id:'birdhouse',name:'Скворечник',icon:'🐦',kind:'outdoor',hours:1.25,skill:2,cash:70,tools:['Молоток','Шуруповёрт'],materials:[['Доска',2],['Брус',1],['Крепёж',1]],desc:'Небольшой домик для птиц. Место установки выбирается на карте.'},
  {id:'gardenTable',name:'Садовый стол',icon:'🪵',kind:'outdoor',hours:4.5,skill:3,cash:320,tools:['Молоток','Шуруповёрт'],materials:[['Доска',6],['Брус',2],['Крепёж',3],['Пропитка для древесины',0.5]],desc:'Стол для террасы, сада или общей площадки.'}
 ];
-const ui={worker:'a',interiorBuilding:'mainHouse'};
+const ui={worker:'a',interiorBuilding:'mainHouse',pendingPlacement:null};
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 const rub=v=>Math.round(num(v)).toLocaleString('ru-RU')+' ₽';
@@ -40,15 +40,13 @@ function addResource(name,unit,price){
  return item;
 }
 function ensure(){
- if(!G.production||typeof G.production!=='object')G.production={version:1,stock:[],placed:[],history:[],nextId:1,totalCrafted:0,pendingPlacement:null};
+ if(!G.production||typeof G.production!=='object')G.production={version:1,stock:[],placed:[],history:[],nextId:1,totalCrafted:0};
  const p=G.production;
  if(!Array.isArray(p.stock))p.stock=[];
  if(!Array.isArray(p.placed))p.placed=[];
  if(!Array.isArray(p.history))p.history=[];
  if(!Number.isFinite(Number(p.nextId))||p.nextId<1)p.nextId=1;
  p.totalCrafted=Math.max(0,num(p.totalCrafted));
- // Placement is a transient action. Never restore a half-finished click mode after reload.
- p.pendingPlacement=null;
  addResource('Крепёж','уп.',220);
  addResource('Пропитка для древесины','л',550);
 }
@@ -146,7 +144,7 @@ function startPlacement(stockId){
   const scene=document.getElementById('scene');
   if(scene)scene.classList.remove('placing');
  }
- G.production.pendingPlacement=goods.id;
+ ui.pendingPlacement=goods.id;
  const scene=document.getElementById('scene');
  if(scene)scene.classList.add('u4p-placement-active');
  say('Выбери свободную точку на карте для установки: '+goods.name+'.');
@@ -154,16 +152,16 @@ function startPlacement(stockId){
 }
 function placeAt(x,y){
  ensure();
- const id=G.production.pendingPlacement;
+ const id=ui.pendingPlacement;
  if(id===null||id===undefined)return false;
  const goods=G.production.stock.find(x=>String(x.id)===String(id));
- if(!goods){G.production.pendingPlacement=null;renderMap();return false;}
+ if(!goods){ui.pendingPlacement=null;renderMap();return false;}
  const px=Math.max(2,Math.min(98,num(x))),py=Math.max(3,Math.min(96,num(y)));
  const close=G.production.placed.find(x=>Math.hypot(num(x.x)-px,num(x.y)-py)<4.2);
  if(close){say('Слишком близко к объекту «'+close.name+'». Выбери другое место.');return false;}
  G.production.placed.push({id:G.production.nextId++,recipeId:goods.recipeId,type:goods.type,name:goods.name,icon:goods.icon,x:px,y:py,placedAt:date()});
  G.production.stock=G.production.stock.filter(x=>String(x.id)!==String(id));
- G.production.pendingPlacement=null;
+ ui.pendingPlacement=null;
  const scene=document.getElementById('scene');
  if(scene)scene.classList.remove('u4p-placement-active');
  record('На территории установлено: '+goods.name+'.');
@@ -172,7 +170,7 @@ function placeAt(x,y){
  return true;
 }
 function mapClick(e){
- if(G.production.pendingPlacement===null||G.production.pendingPlacement===undefined)return;
+ if(ui.pendingPlacement===null||ui.pendingPlacement===undefined)return;
  if(e.target&&typeof e.target.closest==='function'&&e.target.closest('.hotspot'))return;
  const scene=document.getElementById('scene');
  if(!scene)return;
@@ -180,12 +178,12 @@ function mapClick(e){
  if(!rect.width||!rect.height)return;
  placeAt((e.clientX-rect.left)/rect.width*100,(e.clientY-rect.top)/rect.height*100);
 }
-function cancelPlacement(){
+function cancelPlacement(silent=false){
  if(!G.production)return;
- G.production.pendingPlacement=null;
+ ui.pendingPlacement=null;
  const scene=document.getElementById('scene');
  if(scene)scene.classList.remove('u4p-placement-active');
- renderMap();say('Размещение отменено.');
+ renderMap();if(!silent)say('Размещение отменено.');
 }
 function removePlaced(id){
  ensure();
@@ -202,7 +200,7 @@ function renderMap(){
  let layer=scene.querySelector('.u4p-map-layer');
  if(!layer){layer=document.createElement('div');layer.className='u4p-map-layer';scene.appendChild(layer);}
  layer.innerHTML=G.production.placed.map(x=>'<span class="u4p-map-item" style="left:'+num(x.x)+'%;top:'+num(x.y)+'%" title="'+esc(x.name)+'"><b>'+esc(x.icon)+'</b><small>'+esc(x.name)+'</small></span>').join('');
- scene.classList.toggle('u4p-placement-active',G.production.pendingPlacement!==null);
+ scene.classList.toggle('u4p-placement-active',ui.pendingPlacement!==null);
 }
 function render(){
  const w=document.getElementById('workspace');if(!w||G.tab!=='production')return;
