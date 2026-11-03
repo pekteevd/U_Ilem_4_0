@@ -65,4 +65,4 @@ test('object editor exposes name and type controls',()=>{
 });
 test('rendering saves and draws without a runtime exception',()=>{W.draw();assert.ok(saves>=1);});
 if(process.exitCode)process.exit(process.exitCode);
-process.stdout.write('WebGL map and object integration: '+checks+'/8 checks passed. Saves: '+saves+'.\n');
+process.stdout.write('WebGL map and object integration: '+checks+'/9 checks passed. Saves: '+saves+'.\n');
