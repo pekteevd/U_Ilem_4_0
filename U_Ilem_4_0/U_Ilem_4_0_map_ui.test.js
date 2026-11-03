@@ -31,7 +31,7 @@ const G={
  ],
  inventory:[{name:'Доска',qty:10,unit:'шт'}],
  people:[{id:'d',name:'Дмитрий',skill:3,hours:20}],
- tasks:[]
+ tasks:[{id:101,title:'Покрасить дверь',object:'mainHouse',person:'Дмитрий',hours:3,status:'Запланирована'}]
 };
 let modalHtml='',workspaceCalls=0,renderCalls=0,saves=0;
 const window={
@@ -71,6 +71,7 @@ test('saving a new stage stores the selected object id',()=>{
 test('object work filter excludes other buildings',()=>{
  window.ilemShowObjectWorks('mainHouse');
  assert.ok(elements.workspace.innerHTML.includes('Починить крыльцо'));
+ assert.ok(elements.workspace.innerHTML.includes('Покрасить дверь'));
  assert.equal(elements.workspace.innerHTML.includes('Установить печь'),false);
 });
 test('top-level build navigation clears object-only filter',()=>{
