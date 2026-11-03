@@ -66,11 +66,11 @@ function openObjectStages(key){
  key=key||G.selected;const o=G.objects&&G.objects[key];if(!o)return toastMsg('Сначала выбери объект на карте.');
  const stages=arr('stages').filter(s=>String(s.object)===String(key));
  const rows=stages.length?stages.map(s=>'<div class="row"><span><b>'+esc(s.title)+'</b><br><small>'+Number(s.progress||0)+'% · '+Number(s.hours||0)+' ч</small></span><button '+(s.progress>=100?'disabled':'')+' onclick="openStageById('+Number(s.id)+')">Открыть</button></div>').join(''):'<p class="muted">У этого объекта пока нет этапов.</p>';
- if(typeof modal==='function')modal('<h2>Работы: '+esc(o.name)+'</h2><p class="small">Здесь отображаются только этапы выбранного объекта.</p>'+rows+'<div class="actions"><button onclick="closeModal()">Закрыть</button><button onclick="openNewStageForObject('+JSON.stringify(String(key))+')">＋ Новый этап</button></div>');
+ if(typeof modal==='function')modal('<h2>Работы: '+esc(o.name)+'</h2><p class="small">Здесь отображаются только этапы выбранного объекта.</p>'+rows+'<div class="actions"><button onclick="closeModal()">Закрыть</button><button onclick="openNewStageForObject(\''+esc(String(key))+'\')">＋ Новый этап</button></div>');
 }
 function openNewStage(key){
  key=key||G.selected;const o=G.objects&&G.objects[key];if(!o)return;
- if(typeof modal==='function')modal('<h2>Новый этап · '+esc(o.name)+'</h2><label class="field">Название<input id="newStageTitle" placeholder="Например, заменить окна"></label><div class="grid2"><label class="field">Часы<input id="newStageHours" type="number" value="8" min=".1" step=".1"></label><label class="field">Навык 1–5<input id="newStageSkill" type="number" value="1" min="1" max="5"></label><label class="field">Расходы, ₽<input id="newStageCost" type="number" value="0" min="0"></label></div><p class="small">Объект уже привязан: '+esc(o.name)+'.</p><div class="actions"><button onclick="closeModal()">Отмена</button><button onclick="createStageForObject('+JSON.stringify(String(key))+')">Создать этап</button></div>');
+ if(typeof modal==='function')modal('<h2>Новый этап · '+esc(o.name)+'</h2><label class="field">Название<input id="newStageTitle" placeholder="Например, заменить окна"></label><div class="grid2"><label class="field">Часы<input id="newStageHours" type="number" value="8" min=".1" step=".1"></label><label class="field">Навык 1–5<input id="newStageSkill" type="number" value="1" min="1" max="5"></label><label class="field">Расходы, ₽<input id="newStageCost" type="number" value="0" min="0"></label></div><p class="small">Объект уже привязан: '+esc(o.name)+'.</p><div class="actions"><button onclick="closeModal()">Отмена</button><button onclick="createStageForObject(\''+esc(String(key))+'\')">Создать этап</button></div>');
 }
 function createStage(key){
  const title=(byId('newStageTitle')&&byId('newStageTitle').value||'').trim();if(!title)return toastMsg('Введи название этапа.');
@@ -82,7 +82,7 @@ function renderBuild(){
  const stages=arr('stages').filter(s=>!key||String(s.object)===String(key));
  const title=key&&G.objects[key]?'Работы: '+G.objects[key].name:'Строительство и восстановление';
  const rows=stages.length?stages.map(s=>'<div class="row"><span><b>'+esc(s.title)+'</b><br><small>'+esc(G.objects[s.object]&&G.objects[s.object].name||'Объект не указан')+' · '+Number(s.hours||0)+' ч · '+Number(s.progress||0)+'%</small></span><button '+(s.progress>=100?'disabled':'')+' onclick="openStageById('+Number(s.id)+')">'+(s.progress>=100?'Готово':'Открыть этап')+'</button></div>').join(''):'<p class="muted">Для этого объекта пока нет этапов.</p>';
- root.innerHTML='<h3>'+esc(title)+'</h3>'+rows+'<div class="actions">'+(key?'<button onclick="clearObjectWorkFilter()">Все объекты</button>':'')+'<button onclick="openNewStageForObject('+JSON.stringify(String(key||G.selected||''))+')">＋ Новый этап</button></div>';
+ root.innerHTML='<h3>'+esc(title)+'</h3>'+rows+'<div class="actions">'+(key?'<button onclick="clearObjectWorkFilter()">Все объекты</button>':'')+'<button onclick="openNewStageForObject(\''+esc(String(key||G.selected||''))+'\')">＋ Новый этап</button></div>';
 }
 window.openStageById=openStageById;window.openObjectStages=openObjectStages;window.openNewStageForObject=openNewStage;window.createStageForObject=createStage;
 window.openStage=function(key){openObjectStages(key||G.selected);};
