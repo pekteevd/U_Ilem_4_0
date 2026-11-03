@@ -71,9 +71,10 @@ function saveNewStage(id){
 }
 function renderObjectWorks(id){
  const w=$('workspace');if(!w)return;
- const key=String(id),stages=objectStages(key);
- const rows=stages.length?stages.map(s=>'<div class="row"><span><b>'+esc(s.title)+'</b><br><small>'+num(s.progress)+'% · '+num(s.hours)+' ч · навык '+num(s.skill,1)+'/5</small></span><button onclick="ilemOpenStageById('+Number(s.id)+')">'+(num(s.progress)>=100?'Посмотреть':'Открыть')+'</button></div>').join(''):'<p class="muted">У объекта пока нет этапов.</p>';
- w.innerHTML='<h3>Все работы · '+esc(objectName(key))+'</h3><p class="muted">Показаны только этапы выбранного объекта. Работы других построек здесь не смешиваются.</p>'+rows+'<div class="actions"><button onclick="ilemCreateStageForObject(\''+esc(key)+'\')">＋ Новый этап</button><button onclick="ilemShowAllWorks()">Показать работы всех объектов</button></div>';
+ const key=String(id),stages=objectStages(key),tasks=(G.tasks||[]).filter(t=>String(t.object)===key);
+ const stageRows=stages.length?stages.map(s=>'<div class="row"><span><b>'+esc(s.title)+'</b><br><small>Этап · '+num(s.progress)+'% · '+num(s.hours)+' ч · навык '+num(s.skill,1)+'/5</small></span><button onclick="ilemOpenStageById('+Number(s.id)+')">'+(num(s.progress)>=100?'Посмотреть':'Открыть этап')+'</button></div>').join(''):'<p class="muted">Этапы ещё не созданы.</p>';
+ const taskRows=tasks.length?tasks.map(t=>'<div class="row"><span><b>'+esc(t.title)+'</b><br><small>Задача · '+esc(t.status||'На согласовании')+' · '+esc(t.person||'Не назначен')+' · '+num(t.hours)+' ч</small></span><button onclick="openTaskReview(\''+esc(String(t.id))+'\')">Открыть задачу</button></div>').join(''):'<p class="muted">Связанных задач пока нет.</p>';
+ w.innerHTML='<h3>Все работы · '+esc(objectName(key))+'</h3><p class="muted">Здесь показаны только задачи и этапы выбранного объекта.</p><h3>Задачи · '+tasks.length+'</h3>'+taskRows+'<h3>Этапы · '+stages.length+'</h3>'+stageRows+'<div class="actions"><button onclick="ilemCreateStageForObject(\''+esc(key)+'\')">＋ Новый этап</button><button onclick="ilemShowAllWorks()">Показать работы всех объектов</button></div>';
 }
 function showObjectWorks(id){
  G.objectTasksFilter=String(id||G.selected||'');
