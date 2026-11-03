@@ -61,6 +61,11 @@ if not exist "%~dp0U_Ilem_4_0_calendar_tasks.js" (
     pause
     exit /b 1
 )
+if not exist "%~dp0U_Ilem_4_0_map_ui.js" (
+    echo ERROR: U_Ilem_4_0_map_ui.js was not found.
+    pause
+    exit /b 1
+)
 
 powershell -NoProfile -Command "try { $r=Invoke-WebRequest -UseBasicParsing -TimeoutSec 1 'http://127.0.0.1:4320/api/health'; if ($r.StatusCode -eq 200) { exit 0 } else { exit 1 } } catch { exit 1 }" >nul 2>&1
 if errorlevel 1 (
