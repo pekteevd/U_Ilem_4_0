@@ -5,7 +5,7 @@ if(typeof window==='undefined'||!document)return;
 const sceneEl=document.getElementById('scene');if(!sceneEl)return;
 const CDN='https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
 let THREE=null,renderer=null,world=null,camera=null,active=false,loading=null,frame=false;
-let azimuth=.82,elevation=.72,distance=105,raycaster=null,pointer=null;
+let azimuth=.82,elevation=.72,distance=105,raycaster=null,pointer=null,hasOpened=false;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const statusText=t=>{const el=document.getElementById('uilem3dStatus');if(el)el.textContent=t;};
 const css=document.createElement('style');
@@ -40,6 +40,16 @@ function createHouse(x,z,name,id,type){
  const label=document.createElement('div');label.className='small';label.textContent=name||'Постройка';
  return g;
 }
+function createWell(x,z){
+ const g=new THREE.Group();g.position.set(x,0,z);
+ const stone=material(0x77766b),wood=material(0x805a37),roof=material(0x493323);
+ const ring=addMesh(g,new THREE.CylinderGeometry(1.35,1.5,.8,12),stone,0,.45,0);
+ addMesh(g,new THREE.CylinderGeometry(.95,.95,.18,12),material(0x273c40),0,.9,0);
+ addMesh(g,new THREE.BoxGeometry(.2,3,.2),wood,-1.2,2,0);
+ addMesh(g,new THREE.BoxGeometry(.2,3,.2),wood,1.2,2,0);
+ const cap=addMesh(g,new THREE.BoxGeometry(3.3,.25,2.4),roof,0,3.5,0);cap.rotation.x=.12;
+ world.add(g);
+}
 function createBed(x,z){
  const g=new THREE.Group();g.position.set(x,0,z);
  addMesh(g,new THREE.BoxGeometry(5,.55,2.1),material(0x815c39),0,.35,0);
@@ -69,6 +79,7 @@ function buildWorld(){
   const x=(left-50)*1.05,z=(top-50)*.62,key=el.dataset.object||'',name=el.textContent.trim();
   if(/lake|озеро/i.test(key+' '+name)){return;}
   if(/garden|огород|сад/i.test(key+' '+name)){createBed(x,z);return;}
+  if(/well|колодец/i.test(key+' '+name)){createWell(x,z);return;}
   const type=/bath|баня/i.test(key+' '+name)?'bath':'house';
   createHouse(x,z,name,key,type);
  });
@@ -103,6 +114,11 @@ async function init(){
   }catch(e){statusText('Не удалось загрузить Three.js: '+(e.message||e));throw e;}
  })();return loading;
 }
+function disposeWorld(){
+ if(!world)return;
+ world.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});
+}
+function rebuildWorld(){disposeWorld();buildWorld();updateCamera();}
 function resize(){
  if(!renderer||!camera)return;const host=document.getElementById('uilem3dCanvas');if(!host)return;
  const w=host.clientWidth||1,h=host.clientHeight||1;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);
@@ -123,7 +139,7 @@ function pick(e,canvas){
 }
 function open(){
  active=true;panel.style.display='flex';const layer=sceneEl.querySelector('.camera-layer');if(layer)layer.style.visibility='hidden';sceneEl.querySelectorAll('.hotspot').forEach(x=>x.style.visibility='hidden');
- init().then(resize).catch(()=>{});
+ init().then(()=>{if(hasOpened)rebuildWorld();else hasOpened=true;resize();}).catch(()=>{});
 }
 function close(){
  active=false;panel.style.display='none';const layer=sceneEl.querySelector('.camera-layer');if(layer)layer.style.visibility='';sceneEl.querySelectorAll('.hotspot').forEach(x=>x.style.visibility='');
