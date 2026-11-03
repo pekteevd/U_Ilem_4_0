@@ -84,8 +84,11 @@ jobs:
           }
           const scripts = extract([...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)].filter(m => !/\bsrc\s*=/.test(m[1])), 'script', '.js.txt');
           const styles = extract([...html.matchAll(/<style\b([^>]*)>([\s\S]*?)<\/style\s*>/gi)], 'style', '.css.txt');
+          const approvedScripts = extract([...approved.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)].filter(m => !/\bsrc\s*=/.test(m[1])), 'approved-script', '.js.txt');
+          const approvedStyles = extract([...approved.matchAll(/<style\b([^>]*)>([\s\S]*?)<\/style\s*>/gi)], 'approved-style', '.css.txt');
+          fs.writeFileSync(path.join(dir, 'approved-map-structure.html'), approved.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/g, '[EMBEDDED_MAP_IMAGE]'));
           fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify({
-            htmlBytes: Buffer.byteLength(html), scripts, styles
+            htmlBytes: Buffer.byteLength(html), scripts, styles, approvedScripts, approvedStyles
           }, null, 2));
           const approved = fs.readFileSync('U_Ilem_3_0_APPROVED_MAP.html', 'utf8');
           const crypto = require('node:crypto');
