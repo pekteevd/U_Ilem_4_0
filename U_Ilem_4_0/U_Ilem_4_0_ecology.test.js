@@ -127,6 +127,7 @@ test('removed plant marker disappears but record remains in history', () => {
   assert.doesNotMatch(scene.layer.innerHTML, /Яблоня/);
 });
 test('plant card exposes map placement action', () => {
+  E.plant('apple');
   G.tab = 'livingPlants';
   E.render();
   assert.match(workspace.innerHTML, /Указать место на карте|Переместить на карте/);
