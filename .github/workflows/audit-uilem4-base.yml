@@ -1,141 +1,31 @@
-name: Verify 4.0 modules and inspect base
+name: Verify U Ilem 4.0
 on:
   push:
     branches:
       - fix/audit-2026-11-03
     paths:
       - .github/workflows/audit-uilem4-base.yml
-      - U_Ilem_4_0/U_Ilem_4_0_base.html
       - U_Ilem_4_0/U_Ilem_4_0_*.js
-permissions:
-  contents: write
+      - U_Ilem_4_0/U_Ilem_4_0_base.html
 jobs:
-  verify-and-extract:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/audit-2026-11-03
           fetch-depth: 1
-      - name: Syntax checks
+      - name: JavaScript syntax
         run: |
           cd U_Ilem_4_0
-          node --check U_Ilem_4_0_server.js
-          node --check U_Ilem_4_0_production.js
-          node --check U_Ilem_4_0_production.test.js
-          node --check U_Ilem_4_0_calendar_tasks.js
-          node --check U_Ilem_4_0_calendar_tasks.test.js
-          node --check U_Ilem_4_0_map_ui.js
-          node --check U_Ilem_4_0_map_ui.test.js
-          node --check U_Ilem_4_0_ollama.js
-          node --check U_Ilem_4_0_ollama.test.js
-      - name: Production tests
-        id: production
-        run: cd U_Ilem_4_0 && node U_Ilem_4_0_production.test.js
-      - name: Calendar and task integration tests
-        id: calendar
-        run: cd U_Ilem_4_0 && node U_Ilem_4_0_calendar_tasks.test.js
-      - name: Map and selected-object tests
-        id: map
-        run: cd U_Ilem_4_0 && node U_Ilem_4_0_map_ui.test.js
-      - name: Ollama chat tests
-        run: cd U_Ilem_4_0 && node U_Ilem_4_0_ollama.test.js
-      - name: Water tests
-        id: water
-        run: cd U_Ilem_4_0 && node U_Ilem_4_0_water.test.js
-      - name: Ecology tests
-        id: ecology
-        run: cd U_Ilem_4_0 && node U_Ilem_4_0_ecology.test.js
-      - name: Construction tests
-        id: construction
-        run: cd U_Ilem_4_0 && node U_Ilem_4_0_construction.test.js
-      - name: Extract inline scripts and styles for review
-        if: always()
+          for file in U_Ilem_4_0_*.js; do node --check "$file"; done
+      - name: Existing integration tests
         run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const path = require('node:path');
-          const html = fs.readFileSync('U_Ilem_4_0/U_Ilem_4_0_base.html', 'utf8');
-          const dir = 'U_Ilem_4_0/.audit_extract';
-          fs.rmSync(dir, { recursive: true, force: true });
-          fs.mkdirSync(dir, { recursive: true });
-          function extract(matches, prefix, extension) {
-            const manifest = [];
-            let index = 0;
-            for (const match of matches) {
-              const body = match[2];
-              if (!body.trim()) continue;
-              index++;
-              const bytes = Buffer.from(body, 'utf8');
-              const parts = [];
-              let start = 0, part = 0;
-              while (start < bytes.length) {
-                let end = Math.min(start + 70000, bytes.length);
-                while (end < bytes.length && (bytes[end] & 0xc0) === 0x80) end--;
-                if (end <= start) end = Math.min(start + 70000, bytes.length);
-                const name = prefix + '-' + String(index).padStart(2,'0') + '-part-' + String(++part).padStart(2,'0') + extension;
-                fs.writeFileSync(path.join(dir, name), bytes.subarray(start, end));
-                parts.push(name);
-                start = end;
-              }
-              manifest.push({ index, bytes: bytes.length, parts });
-            }
-            return manifest;
-          }
-          const scripts = extract([...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)].filter(m => !/\bsrc\s*=/.test(m[1])), 'script', '.js.txt');
-          const styles = extract([...html.matchAll(/<style\b([^>]*)>([\s\S]*?)<\/style\s*>/gi)], 'style', '.css.txt');
-          const approvedScripts = extract([...approved.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)].filter(m => !/\bsrc\s*=/.test(m[1])), 'approved-script', '.js.txt');
-          const approvedStyles = extract([...approved.matchAll(/<style\b([^>]*)>([\s\S]*?)<\/style\s*>/gi)], 'approved-style', '.css.txt');
-          fs.writeFileSync(path.join(dir, 'approved-map-structure.html'), approved.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/g, '[EMBEDDED_MAP_IMAGE]'));
-          fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify({
-            htmlBytes: Buffer.byteLength(html), scripts, styles, approvedScripts, approvedStyles
-          }, null, 2));
-          const approved = fs.readFileSync('U_Ilem_3_0_APPROVED_MAP.html', 'utf8');
-          const crypto = require('node:crypto');
-          function imageStats(source) {
-            const matches = [...source.matchAll(/data:image\/([a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)/g)];
-            return matches.map((m, i) => {
-              const bytes = Buffer.from(m[2], 'base64');
-              return { index: i + 1, mime: m[1], bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
-            });
-          }
-          const baseImages = imageStats(html);
-          const approvedImages = imageStats(approved);
-          const baseImageMatch = html.match(/data:image\/png;base64,([A-Za-z0-9+/=]+)/);
-          const approvedImageMatch = approved.match(/data:image\/png;base64,([A-Za-z0-9+/=]+)/);
-          const imageDir = path.join(dir, 'map-images');
-          fs.mkdirSync(imageDir, { recursive: true });
-          if (baseImageMatch) fs.writeFileSync(path.join(imageDir, 'base-map.png'), Buffer.from(baseImageMatch[1], 'base64'));
-          if (approvedImageMatch) fs.writeFileSync(path.join(imageDir, 'approved-map.png'), Buffer.from(approvedImageMatch[1], 'base64'));
-          const baseHashes = new Set(baseImages.map(x => x.sha256));
-          const approvedHashes = new Set(approvedImages.map(x => x.sha256));
-          fs.writeFileSync(path.join(dir, 'map-assets.json'), JSON.stringify({
-            baseHtmlBytes: Buffer.byteLength(html),
-            approvedMapHtmlBytes: Buffer.byteLength(approved),
-            baseImages, approvedImages,
-            sharedImageHashes: [...baseHashes].filter(x => approvedHashes.has(x))
-          }, null, 2));
-          console.log('Extracted', scripts.length, 'inline scripts and', styles.length, 'style blocks. Compared embedded images with approved map.');
-          NODE
-      - name: Create small map previews
-        if: always()
-        run: |
-          python3 -m pip install --quiet pillow
-          python3 <<'PY'
-          from PIL import Image
-          from pathlib import Path
-          root = Path('U_Ilem_4_0/.audit_extract/map-images')
-          for name in ('base-map', 'approved-map'):
-              image = Image.open(root / (name + '.png')).convert('RGB')
-              image.thumbnail((1100, 1100))
-              image.save(root / (name + '-preview.jpg'), 'JPEG', quality=78, optimize=True)
-          PY
-          base64 -w0 U_Ilem_4_0/.audit_extract/map-images/base-map-preview.jpg > U_Ilem_4_0/.audit_extract/map-images/base-map-preview-base64.txt
-          base64 -w0 U_Ilem_4_0/.audit_extract/map-images/approved-map-preview.jpg > U_Ilem_4_0/.audit_extract/map-images/approved-map-preview-base64.txt
-      - name: Commit extracted source for review
-        if: always()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add U_Ilem_4_0/.audit_extract
-          git diff --cached --quiet || (git commit -m "Refresh temporary base source audit extract" && git push origin HEAD:fix/audit-2026-11-03)
+          cd U_Ilem_4_0
+          node U_Ilem_4_0_production.test.js
+          node U_Ilem_4_0_calendar_tasks.test.js
+          node U_Ilem_4_0_map_ui.test.js
+          node U_Ilem_4_0_ollama.test.js
+          node U_Ilem_4_0_water.test.js
+          node U_Ilem_4_0_ecology.test.js
+          node U_Ilem_4_0_construction.test.js
