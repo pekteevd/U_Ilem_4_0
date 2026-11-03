@@ -89,6 +89,7 @@ function removeTask(id){
 }
 function createTask(){
  const people=(G.people||[]).map(p=>'<option value="'+h(p.name)+'">'+h(p.name)+'</option>').join('');
+ const responsibleOptions=(G.people||[]).map(p=>'<option value="'+h(p.name)+'">'+h(p.name)+'</option>').join('');
  const objects=Object.entries(G.objects||{}).map(([id,o])=>'<option value="'+h(id)+'"'+(id===G.selected?' selected':'')+'>'+h(o.name||id)+'</option>').join('');
  const stages=(G.stages||[]).map(s=>'<option value="'+h(String(s.id))+'">'+h(s.title)+' · '+h(objectNameForTask(s.object))+'</option>').join('');
  const html='<h2>Новая задача</h2><label class="field">Название<input id="ilemNewTaskTitle" placeholder="Что нужно сделать"></label><label class="field">Описание<textarea id="ilemNewTaskDescription" rows="3"></textarea></label><div class="grid2"><label class="field">Объект<select id="ilemNewTaskObject"><option value="">Без привязки</option>'+objects+'</select></label><label class="field">Ответственный<select id="ilemNewTaskPerson">'+people+'</select></label><label class="field">Срок<input id="ilemNewTaskDue" placeholder="день.месяц.год"></label><label class="field">Приоритет<select id="ilemNewTaskPriority"><option>Плановый</option><option>Низкий</option><option>Высокий</option><option>Срочный</option></select></label><label class="field">Трудоёмкость, ч<input id="ilemNewTaskHours" type="number" min="0" value="1"></label><label class="field">Связанный этап<select id="ilemNewTaskStage"><option value="">Без отдельного этапа</option>'+stages+'</select></label></div><label class="field">Материалы и ресурсы<textarea id="ilemNewTaskResources" rows="3" placeholder="Доска: 4\nКраска: 1"></textarea></label><div class="actions"><button onclick="closeModal()">Отмена</button><button onclick="ilemSaveNewTask()">Создать задачу</button></div>';
@@ -98,7 +99,7 @@ function createTask(){
 function saveNewTask(){
  const val=id=>$(id)?.value??'',title=String(val('ilemNewTaskTitle')).trim();if(!title){tell('Введи название задачи.');return false;}
  const resources=String(val('ilemNewTaskResources')).split(/\r?\n/).map(line=>{const m=line.match(/^(.+?)\s*:\s*(\d+(?:[.,]\d+)?)$/);return m?{name:m[1].trim(),qty:Number(m[2].replace(',','.'))}:null;}).filter(Boolean);
- const task={id:nextId(),title,description:String(val('ilemNewTaskDescription')),notes:String(val('ilemNewTaskDescription')),person:String(val('ilemNewTaskPerson'))||'Не назначен',responsible:String(val('ilemNewTaskPerson'))||'Не назначен',object:String(val('ilemNewTaskObject'))||null,dueDate:String(val('ilemNewTaskDue')).trim()||null,priority:String(val('ilemNewTaskPriority'))||'Плановый',hours:Math.max(0,num(val('ilemNewTaskHours'),1)),stageId:String(val('ilemNewTaskStage'))||null,resources,materials:resources.map(x=>[x.name,x.qty]),status:'На согласовании',source:'Календарь · пользовательская задача',actions:[],purchases:[],calendarKey:'calendar:custom:'+year()+':'+month()+':'+title.toLowerCase(),calendarMonth:month(),calendarYear:year(),calendarSeason:season(),createdAt:date()};
+ const task={id:nextId(),title,description:String(val('ilemNewTaskDescription')),notes:String(val('ilemNewTaskDescription')),person:String(val('ilemNewTaskPerson'))||'Не назначен',responsible:String(val('ilemNewTaskResponsible'))||String(val('ilemNewTaskPerson'))||'Не назначен',object:String(val('ilemNewTaskObject'))||null,dueDate:String(val('ilemNewTaskDue')).trim()||null,priority:String(val('ilemNewTaskPriority'))||'Плановый',hours:Math.max(0,num(val('ilemNewTaskHours'),1)),stageId:String(val('ilemNewTaskStage'))||null,resources,materials:resources.map(x=>[x.name,x.qty]),status:'На согласовании',source:'Календарь · пользовательская задача',actions:[],purchases:[],calendarKey:'calendar:custom:'+year()+':'+month()+':'+title.toLowerCase(),calendarMonth:month(),calendarYear:year(),calendarSeason:season(),createdAt:date()};
  if(G.tasks.some(t=>t.calendarKey===task.calendarKey)){tell('Такая задача уже есть в плане месяца.');return false;}
  G.tasks.push(task);save();if(typeof window.closeModal==='function')window.closeModal();refresh();tell('Задача создана и добавлена на общую доску.');return task.id;
 }
@@ -122,6 +123,7 @@ function openTaskReview(id){
  const t=G.tasks.find(x=>String(x.id)===String(id));if(!t){tell('Задача не найдена.');return false;}
  const objects=Object.entries(G.objects||{}).map(([key,o])=>'<option value="'+h(key)+'"'+(String(t.object||'')===String(key)?' selected':'')+'>'+h(o.name||key)+'</option>').join('');
  const people=(G.people||[]).map(p=>'<option value="'+h(p.name)+'"'+(String(t.person||'')===String(p.name)?' selected':'')+'>'+h(p.name)+'</option>').join('');
+ const responsibles=(G.people||[]).map(p=>'<option value="'+h(p.name)+'"'+(String(t.responsible||t.person||'')===String(p.name)?' selected':'')+'>'+h(p.name)+'</option>').join('');
  const statuses=['На согласовании','Запланирована','В работе','Отложена','Выполнена','Отклонена'];
  const statusHtml=statuses.map(x=>'<option'+(String(t.status||'На согласовании')===x?' selected':'')+'>'+x+'</option>').join('');
  const stages=(G.stages||[]).map(s=>'<option value="'+h(String(s.id))+'"'+(String(t.stageId||'')===String(s.id)?' selected':'')+'>'+h(s.title)+' · '+h(objectNameForTask(s.object))+'</option>').join('');
@@ -132,7 +134,7 @@ function openTaskReview(id){
  '<label class="field">Название<input id="ilemTaskTitle" value="'+h(t.title||'')+'"></label>'+
  '<label class="field">Описание<textarea id="ilemTaskDescription" rows="3">'+h(t.description||t.notes||'')+'</textarea></label>'+
  '<div class="grid2"><label class="field">Объект<select id="ilemTaskObject"><option value="">Без привязки</option>'+objects+'</select></label>'+
- '<label class="field">Исполнитель<select id="ilemTaskPerson">'+people+'</select></label>'+
+ '<label class="field">Исполнитель<select id="ilemTaskPerson">'+people+'</select></label>'+\n '<label class="field">Ответственный<select id="ilemTaskResponsible">'+responsibles+'</select></label>'+
  '<label class="field">Срок<input id="ilemTaskDue" type="text" placeholder="день.месяц.год" value="'+h(dateValue)+'"></label>'+
  '<label class="field">Приоритет<select id="ilemTaskPriority">'+['Низкий','Плановый','Высокий','Срочный'].map(x=>'<option'+(String(t.priority||'Плановый')===x?' selected':'')+'>'+x+'</option>').join('')+'</select></label>'+
  '<label class="field">Статус<select id="ilemTaskStatus">'+statusHtml+'</select></label>'+
@@ -149,7 +151,7 @@ function saveTaskReview(id){
  const value=id=>$(id)?.value??'';
  const title=String(value('ilemTaskTitle')).trim();if(!title){tell('У задачи должно быть название.');return false;}
  t.title=title;t.description=String(value('ilemTaskDescription'));t.notes=t.description;
- t.object=String(value('ilemTaskObject'))||null;t.person=String(value('ilemTaskPerson'))||'Не назначен';
+ t.object=String(value('ilemTaskObject'))||null;t.person=String(value('ilemTaskPerson'))||'Не назначен';t.responsible=String(value('ilemTaskResponsible'))||t.person;
  t.dueDate=String(value('ilemTaskDue')).trim()||null;t.priority=String(value('ilemTaskPriority'))||'Плановый';
  t.stageId=String(value('ilemTaskStage'))||null;
  const participantEl=$('ilemTaskParticipants');t.participants=participantEl?Array.from(participantEl.selectedOptions).map(x=>x.value):[];
