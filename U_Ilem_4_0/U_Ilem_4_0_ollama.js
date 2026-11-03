@@ -54,7 +54,7 @@ function appendUser(text){
 function buildMessages(){
  const messages=[{role:'system',content:SYSTEM_PROMPT}];
  (G.chat||[]).slice(-14).forEach(m=>{
-  if(!m||!m.text)return;
+  if(!m||!m.text||m.pending)return;
   messages.push({role:m.who==='Дмитрий'?'user':'assistant',content:String(m.text)});
  });
  return messages;
@@ -65,12 +65,14 @@ async function send(){
  if(!text)return false;
  if(input)input.value='';
  const start=G.chat.length;
- if(taskIntent(text)&&typeof window.sendCommand==='function'){
-  try{window.__uilemOllamaCalling=true;previousSend();}catch(error){appendUser(text);}finally{window.__uilemOllamaCalling=false;}
+ if(taskIntent(text)&&typeof previousSend==='function'){
+  if(input)input.value=text;
+  try{previousSend();}catch(error){appendUser(text);}
+  if(input)input.value='';
   const userMessage=G.chat.slice(start).find(m=>m&&m.who==='Дмитрий');
   G.chat.splice(start);
   if(userMessage)G.chat.push(userMessage);else appendUser(text);
- }else appendUser(text);
+ }else{if(input)input.value='';appendUser(text);}
  const pending={who:'У Илем · ИИ',text:'Проверяю Ollama и готовлю ответ…',kind:'system',pending:true};
  G.chat.push(pending);persist();renderChat();
  try{
