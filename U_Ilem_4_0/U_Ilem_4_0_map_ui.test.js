@@ -92,4 +92,4 @@ test('moving sweep animation is disabled without removing the map',()=>{
  assert.ok(css.includes('.scene:after'));
 });
 if(process.exitCode)process.exit(process.exitCode);
-process.stdout.write('Map and object-work integration: '+checks+'/9 checks passed. Saves: '+saves+'.\n');
+process.stdout.write('Map and object-work integration: '+checks+'/10 checks passed. Saves: '+saves+'.\n');
