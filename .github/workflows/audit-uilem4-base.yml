@@ -27,6 +27,8 @@ jobs:
           node --check U_Ilem_4_0_calendar_tasks.test.js
           node --check U_Ilem_4_0_map_ui.js
           node --check U_Ilem_4_0_map_ui.test.js
+          node --check U_Ilem_4_0_ollama.js
+          node --check U_Ilem_4_0_ollama.test.js
       - name: Production tests
         id: production
         run: cd U_Ilem_4_0 && node U_Ilem_4_0_production.test.js
@@ -36,6 +38,8 @@ jobs:
       - name: Map and selected-object tests
         id: map
         run: cd U_Ilem_4_0 && node U_Ilem_4_0_map_ui.test.js
+      - name: Ollama chat tests
+        run: cd U_Ilem_4_0 && node U_Ilem_4_0_ollama.test.js
       - name: Water tests
         id: water
         run: cd U_Ilem_4_0 && node U_Ilem_4_0_water.test.js
