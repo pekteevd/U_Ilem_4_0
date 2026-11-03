@@ -139,6 +139,7 @@ function startPlacement(stockId){
  const r=recipe(goods.recipeId);
  if(!r||r.kind!=='outdoor'){say('Эту мебель нужно передать в интерьер.');return false;}
  // Placement modes are mutually exclusive: one map click must place exactly one object.
+ if(window.UilemEcology&&typeof window.UilemEcology.cancelLocate==='function')window.UilemEcology.cancelLocate(true);
  if(G.lighting&&G.lighting.pending!==null&&G.lighting.pending!==undefined){
   G.lighting.pending=null;
   const scene=document.getElementById('scene');

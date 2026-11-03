@@ -14,7 +14,7 @@ const CATALOG=[
 {id:'hazel',name:'Лещина',kind:'Кустарник',icon:'🌿',mature:5,life:40,fruit:'Фундук',yield:5,water:1,hardy:-35,plantHours:1.2},
 {id:'lilac',name:'Сирень',kind:'Кустарник',icon:'🌸',mature:4,life:40,fruit:null,yield:0,water:.9,hardy:-35,plantHours:1}
 ];
-const ui={zone:null,worker:'t'};
+const ui={zone:null,worker:'t',pendingPlantId:null};
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rub=v=>Math.round(Number(v)||0).toLocaleString('ru-RU')+' ₽';
 function dateStamp(){return[G.day||1,G.month||1,G.year||1].join('.');}
@@ -38,6 +38,8 @@ function ensure(){
   p.lastHarvestYear=Number(p.lastHarvestYear)||0;
   p.fruitPending=Math.max(0,Number(p.fruitPending)||0);
   p.plantedAt=p.plantedAt||dateStamp();
+  p.mapX=p.mapX===null||p.mapX===undefined?null:Math.max(2,Math.min(98,Number(p.mapX)||2));
+  p.mapY=p.mapY===null||p.mapY===undefined?null:Math.max(3,Math.min(96,Number(p.mapY)||3));
  });
  if(ui.zone===null&&G.garden.zones.length)ui.zone=G.garden.zones[0].id;
 }
@@ -60,9 +62,46 @@ function plant(speciesId){
  if(!charge(p,s.plantHours,300,s.kind==='Дерево'?2:1))return;
  stock.qty=Number(stock.qty)-1;
  const id=G.garden.livingPlants.reduce((m,x)=>Math.max(m,Number(x.id)||0),0)+1;
- G.garden.livingPlants.push({id,species:s.id,zone:ui.zone,ageDays:0,growth:0,health:100,moisture:65,status:'Саженец',lastHarvestYear:0,fruitPending:0,plantedAt:dateStamp()});
+ G.garden.livingPlants.push({id,species:s.id,zone:ui.zone,ageDays:0,growth:0,health:100,moisture:65,status:'Саженец',lastHarvestYear:0,fruitPending:0,plantedAt:dateStamp(),mapX:null,mapY:null});
  addLog('Посажено растение: '+s.name+' · '+zoneName(ui.zone)+'. Списан 1 саженец, работа '+s.plantHours+' ч.');
  updateScreen();toast(s.name+' посажена.');
+}
+function locate(id){
+ ensure();
+ const p=G.garden.livingPlants.find(x=>Number(x.id)===Number(id));
+ if(!p||p.status==='Удалено')return toast('Растение не найдено в активном саду.');
+ if(window.UilemProduction&&typeof window.UilemProduction.cancelPlacement==='function')window.UilemProduction.cancelPlacement(true);
+ if(G.lighting&&G.lighting.pending!==null&&G.lighting.pending!==undefined){G.lighting.pending=null;document.getElementById('scene')?.classList.remove('placing');}
+ ui.pendingPlantId=p.id;
+ document.getElementById('scene')?.classList.add('eco-locate-active');
+ toast('Выбери на карте место для '+species(p.species).name+'. Можно изменить его положение позже.');
+ return true;
+}
+function placeAt(x,y){
+ ensure();
+ if(ui.pendingPlantId===null||ui.pendingPlantId===undefined)return false;
+ const p=G.garden.livingPlants.find(x=>Number(x.id)===Number(ui.pendingPlantId));
+ if(!p){ui.pendingPlantId=null;renderMap();return false;}
+ p.mapX=Math.max(2,Math.min(98,Number(x)||2));
+ p.mapY=Math.max(3,Math.min(96,Number(y)||3));
+ ui.pendingPlantId=null;
+ document.getElementById('scene')?.classList.remove('eco-locate-active');
+ addLog('Место на карте задано: '+species(p.species).name+' · '+zoneName(p.zone)+' · '+Math.round(p.mapX)+'%, '+Math.round(p.mapY)+'%.');
+ updateScreen();renderMap();toast('Растение отмечено на карте.');
+ return true;
+}
+function cancelLocate(silent=false){
+ if(ui.pendingPlantId===null||ui.pendingPlantId===undefined)return;
+ ui.pendingPlantId=null;
+ document.getElementById('scene')?.classList.remove('eco-locate-active');
+ renderMap();if(!silent)toast('Выбор места отменён.');
+}
+function mapClick(e){
+ if(ui.pendingPlantId===null||ui.pendingPlantId===undefined)return;
+ if(e.target&&typeof e.target.closest==='function'&&(e.target.closest('.hotspot')||e.target.closest('.u4p-map-item')))return;
+ const scene=document.getElementById('scene');if(!scene)return;
+ const r=scene.getBoundingClientRect();if(!r.width||!r.height)return;
+ placeAt((e.clientX-r.left)/r.width*100,(e.clientY-r.top)/r.height*100);
 }
 function water(id){
  const p=G.garden.livingPlants.find(x=>Number(x.id)===Number(id));if(!p)return;
@@ -156,6 +195,14 @@ function plantIcon(p){
  if(s.id==='spruce')return'🌲';if(seasonIndex()===3)return'🍂';
  if(p.growth<30)return'🌱';if(s.kind==='Кустарник')return'🌿';return'🌳';
 }
+function renderMap(){
+ const scene=document.getElementById('scene');if(!scene)return;
+ let layer=scene.querySelector('.eco-map-layer');
+ if(!layer){layer=document.createElement('div');layer.className='eco-map-layer';scene.appendChild(layer);}
+ const plants=(G.garden&&Array.isArray(G.garden.livingPlants)?G.garden.livingPlants:[]).filter(p=>p&&p.status!=='Удалено'&&p.mapX!==null&&p.mapX!==undefined&&p.mapY!==null&&p.mapY!==undefined);
+ layer.innerHTML=plants.map(p=>'<span class="eco-map-tree" style="left:'+Number(p.mapX)+'%;top:'+Number(p.mapY)+'%" title="'+esc(species(p.species).name)+' · '+esc(lifeStage(p,species(p.species)))+'"><b>'+plantIcon(p)+'</b><small>'+esc(species(p.species).name)+'</small></span>').join('');
+ scene.classList.toggle('eco-locate-active',ui.pendingPlantId!==null&&ui.pendingPlantId!==undefined);
+}
 function render(){
  const w=document.getElementById('workspace');if(!w||G.tab!=='livingPlants')return;
  ensure();
@@ -165,7 +212,7 @@ function render(){
  const catalog=CATALOG.map(s=>'<div class="eco-card"><div class="eco-card-title"><span>'+s.icon+'</span><div><b>'+esc(s.name)+'</b><small>'+esc(s.kind)+' · зрелость около '+s.mature+' игровых лет</small></div></div><div class="eco-meta">Саженец: 1 шт. на складе · посадка '+rub(300)+' · '+s.plantHours+' ч</div><button data-eco-act="plant" data-species="'+s.id+'">Посадить в выбранной зоне</button></div>').join('');
  const list=plants.map(p=>{
   const s=species(p.species),health=Math.round(p.health),moisture=Math.round(p.moisture),growth=Math.round(p.growth),age=(p.ageDays/360).toFixed(1);
-  return '<div class="eco-plant"><div class="eco-plant-head"><span class="eco-plant-icon">'+plantIcon(p)+'</span><div><b>'+esc(s.name)+'</b><small>'+esc(zoneName(p.zone))+' · '+esc(lifeStage(p,s))+' · '+age+' игровых лет</small></div><span class="eco-status">'+esc(seasonalState(p,s))+'</span></div><div class="eco-bars"><label>Рост <b>'+growth+'%</b><i><span style="width:'+growth+'%"></span></i></label><label>Здоровье <b>'+health+'%</b><i><span style="width:'+health+'%"></span></i></label><label>Влажность <b>'+moisture+'%</b><i><span style="width:'+moisture+'%"></span></i></label></div><div class="eco-actions"><button data-eco-act="water" data-id="'+p.id+'">Полить</button><button data-eco-act="feed" data-id="'+p.id+'">Подкормить</button><button data-eco-act="prune" data-id="'+p.id+'">Обрезать / осмотреть</button>'+(p.fruitPending?'<button data-eco-act="harvest" data-id="'+p.id+'">Собрать '+p.fruitPending+' кг</button>':'')+'<button data-eco-act="remove" data-id="'+p.id+'">Удалить из активного сада</button></div></div>';
+  return '<div class="eco-plant"><div class="eco-plant-head"><span class="eco-plant-icon">'+plantIcon(p)+'</span><div><b>'+esc(s.name)+'</b><small>'+esc(zoneName(p.zone))+' · '+esc(lifeStage(p,s))+' · '+age+' игровых лет</small></div><span class="eco-status">'+esc(seasonalState(p,s))+'</span></div><div class="eco-bars"><label>Рост <b>'+growth+'%</b><i><span style="width:'+growth+'%"></span></i></label><label>Здоровье <b>'+health+'%</b><i><span style="width:'+health+'%"></span></i></label><label>Влажность <b>'+moisture+'%</b><i><span style="width:'+moisture+'%"></span></i></label></div><div class="eco-actions"><button data-eco-act="water" data-id="'+p.id+'">Полить</button><button data-eco-act="feed" data-id="'+p.id+'">Подкормить</button><button data-eco-act="prune" data-id="'+p.id+'">Обрезать / осмотреть</button>'+(p.fruitPending?'<button data-eco-act="harvest" data-id="'+p.id+'">Собрать '+p.fruitPending+' кг</button>':'')+'<button data-eco-act="locate" data-id="'+p.id+'">'+(p.mapX!==null&&p.mapX!==undefined&&p.mapY!==null&&p.mapY!==undefined?'Переместить на карте':'Указать место на карте')+'</button><button data-eco-act="remove" data-id="'+p.id+'">Удалить из активного сада</button></div></div>';
  }).join('');
  const living=plants.filter(p=>p.status!=='Погибло'),trees=living.filter(p=>species(p.species).kind!=='Кустарник').length,bushes=living.length-trees;
  w.innerHTML='<div class="eco-wrap"><div class="eco-heading"><div><h3>Живая растительность</h3><p class="muted">Каждое посаженное дерево и кустарник — отдельный объект игрового мира с возрастом, ростом и состоянием.</p></div><span class="eco-season">'+seasonName()+' · '+(G.day||1)+' день</span></div><div class="eco-warning">Система моделирует игровой жизненный цикл. Скорости роста и игровые расходы — параметры симуляции, не агрономический прогноз. Фактические сорта и уже существующие деревья вводятся вручную, по результатам инвентаризации.</div><div class="eco-summary"><span><b>'+living.length+'</b><small>живых растений</small></span><span><b>'+trees+'</b><small>деревьев</small></span><span><b>'+bushes+'</b><small>кустарников</small></span><span><b>'+plants.filter(p=>p.fruitPending>0).length+'</b><small>с урожаем</small></span></div><div class="eco-tools"><label>Зона посадки<select id="eco-zone">'+zoneOptions+'</select></label><label>Исполнитель<select id="eco-worker">'+workerOptions+'</select></label><span class="eco-stock">Саженцы на складе: '+Number(seedlingItem()?.qty||0)+' шт. · Удобрения: '+Number((G.inventory||[]).find(x=>x.name==='Удобрения')?.qty||0)+' кг</span></div><h4>Каталог для посадки</h4><div class="eco-catalog">'+catalog+'</div><h4>Растения в игровом мире</h4>'+(list||'<p class="muted">Пока нет индивидуально заведённых растений. Уже существующие группы из инвентаризации сада сохранены отдельно и не превращаются автоматически в выдуманные объекты.</p>')+'<p class="eco-note">Полив повышает влажность из условного источника воды участка. Удобрение списывает 1 кг со склада. Обрезка, полив и посадка расходуют часы и энергию исполнителя. Рост идёт по игровым дням, зимой замедляется, а здоровье зависит от влажности и морозостойкости вида.</p></div>';
@@ -173,11 +220,11 @@ function render(){
 function click(e){
  const b=e.target.closest('[data-eco-act]');if(!b)return;
  const a=b.dataset.ecoAct,id=Number(b.dataset.id);
- if(a==='plant')plant(b.dataset.species);else if(a==='water')water(id);else if(a==='feed')feed(id);else if(a==='prune')prune(id);else if(a==='harvest')harvest(id);else if(a==='remove')removePlant(id);
+ if(a==='plant')plant(b.dataset.species);else if(a==='locate')locate(id);else if(a==='water')water(id);else if(a==='feed')feed(id);else if(a==='prune')prune(id);else if(a==='harvest')harvest(id);else if(a==='remove')removePlant(id);
 }
 function change(e){if(e.target.id==='eco-zone')ui.zone=e.target.value;else if(e.target.id==='eco-worker')ui.worker=e.target.value;if(G.tab==='livingPlants')render();}
 function styles(){if(document.getElementById('eco-style'))return;const s=document.createElement('style');s.id='eco-style';s.textContent=`
-.eco-wrap{display:grid;gap:12px}.eco-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}.eco-heading h3{margin:0}.eco-season{background:#e9dec7;padding:8px 12px;border-radius:20px;font:12px Arial;color:#604d31}.eco-warning{background:#fff3d7;color:#6e4b1f;border:1px solid #d5b36f;border-radius:10px;padding:10px;font:12px/1.45 Arial}.eco-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.eco-summary span{display:grid;background:#f8f0df;border:1px solid #d4c29e;border-radius:9px;padding:9px;text-align:center}.eco-summary b{font:bold 20px Arial;color:#4c3a27}.eco-summary small{font:10px Arial;color:#806c4e}.eco-tools{display:flex;gap:12px;align-items:end;flex-wrap:wrap;background:#f1e6ce;padding:10px;border-radius:10px}.eco-tools label{display:grid;gap:4px;font:12px Arial;color:#68583f;min-width:180px}.eco-tools select{padding:8px;border:1px solid #b9a27c;border-radius:8px;background:#fffaf0}.eco-stock{font:11px Arial;color:#65543a;padding:8px}.eco-catalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}.eco-card,.eco-plant{background:#f8f0df;border:1px solid #d4c29e;border-radius:10px;padding:10px}.eco-card-title,.eco-plant-head{display:flex;align-items:center;gap:9px}.eco-card-title>span,.eco-plant-icon{font-size:24px}.eco-card-title div,.eco-plant-head div{display:grid;gap:2px;min-width:0}.eco-card small,.eco-plant-head small{font:11px Arial;color:#806c4e}.eco-meta{font:10px Arial;color:#806c4e;margin:8px 0}.eco-card button,.eco-actions button{font:11px Arial;padding:7px 9px;margin:3px}.eco-plant{margin:8px 0}.eco-plant-head{align-items:flex-start}.eco-status{font:10px Arial;background:#e9dec7;padding:5px 8px;border-radius:18px;margin-left:auto}.eco-bars{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.eco-bars label{display:grid;gap:3px;font:10px Arial;color:#806c4e}.eco-bars b{color:#4c3a27}.eco-bars i{height:7px;background:#ddd0b4;border-radius:10px;overflow:hidden}.eco-bars i span{display:block;height:100%;background:#78965c}.eco-actions{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}.eco-note{font:10px/1.45 Arial;color:#817258}@media(max-width:600px){.eco-summary{grid-template-columns:repeat(2,1fr)}.eco-bars{grid-template-columns:1fr}}
+.eco-wrap{display:grid;gap:12px}.eco-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}.eco-heading h3{margin:0}.eco-season{background:#e9dec7;padding:8px 12px;border-radius:20px;font:12px Arial;color:#604d31}.eco-warning{background:#fff3d7;color:#6e4b1f;border:1px solid #d5b36f;border-radius:10px;padding:10px;font:12px/1.45 Arial}.eco-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.eco-summary span{display:grid;background:#f8f0df;border:1px solid #d4c29e;border-radius:9px;padding:9px;text-align:center}.eco-summary b{font:bold 20px Arial;color:#4c3a27}.eco-summary small{font:10px Arial;color:#806c4e}.eco-tools{display:flex;gap:12px;align-items:end;flex-wrap:wrap;background:#f1e6ce;padding:10px;border-radius:10px}.eco-tools label{display:grid;gap:4px;font:12px Arial;color:#68583f;min-width:180px}.eco-tools select{padding:8px;border:1px solid #b9a27c;border-radius:8px;background:#fffaf0}.eco-stock{font:11px Arial;color:#65543a;padding:8px}.eco-catalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}.eco-card,.eco-plant{background:#f8f0df;border:1px solid #d4c29e;border-radius:10px;padding:10px}.eco-card-title,.eco-plant-head{display:flex;align-items:center;gap:9px}.eco-card-title>span,.eco-plant-icon{font-size:24px}.eco-card-title div,.eco-plant-head div{display:grid;gap:2px;min-width:0}.eco-card small,.eco-plant-head small{font:11px Arial;color:#806c4e}.eco-meta{font:10px Arial;color:#806c4e;margin:8px 0}.eco-card button,.eco-actions button{font:11px Arial;padding:7px 9px;margin:3px}.eco-plant{margin:8px 0}.eco-plant-head{align-items:flex-start}.eco-status{font:10px Arial;background:#e9dec7;padding:5px 8px;border-radius:18px;margin-left:auto}.eco-bars{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.eco-bars label{display:grid;gap:3px;font:10px Arial;color:#806c4e}.eco-bars b{color:#4c3a27}.eco-bars i{height:7px;background:#ddd0b4;border-radius:10px;overflow:hidden}.eco-bars i span{display:block;height:100%;background:#78965c}.eco-actions{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}.eco-note{font:10px/1.45 Arial;color:#817258}.eco-map-layer{position:absolute;inset:0;z-index:8;pointer-events:none}.eco-map-tree{position:absolute;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:1px;min-width:26px;padding:3px 5px;border:1px solid #d9c18e;border-radius:8px;background:#293b27e8;color:#fff3d8;box-shadow:0 2px 7px #0006;white-space:nowrap}.eco-map-tree b{font-size:20px;line-height:1}.eco-map-tree small{font:9px Arial}.eco-locate-active{outline:3px solid #8da66c;outline-offset:-3px;cursor:crosshair!important}@media(max-width:600px){.eco-summary{grid-template-columns:repeat(2,1fr)}.eco-bars{grid-template-columns:1fr}}
 `;document.head.appendChild(s);}
 ensure();styles();
 const tabs=document.getElementById('tabs');if(tabs&&!tabs.querySelector('[data-tab="livingPlants"]')){const b=document.createElement('button');b.type='button';b.dataset.tab='livingPlants';b.textContent='Живая растительность';tabs.appendChild(b);}
@@ -195,9 +242,16 @@ if(typeof oldNextMonth==='function'&&!window.__uilemEcologyNextMonthWrapped){
   }
   oldNextMonth();
   dailyTick();
+  renderMap();
   if(G.tab==='livingPlants')render();
  };
 }
+const oldRender=window.render;
+if(typeof oldRender==='function'&&!window.__uilemEcologyRenderWrapped){window.__uilemEcologyRenderWrapped=true;window.render=function(){oldRender();renderMap();};}
+const oldScene=window.renderScene;
+if(typeof oldScene==='function'&&!window.__uilemEcologySceneWrapped){window.__uilemEcologySceneWrapped=true;window.renderScene=function(){oldScene();renderMap();};}
+const scene=document.getElementById('scene');
+if(scene&&!scene.dataset.ecoMapBound){scene.dataset.ecoMapBound='1';scene.addEventListener('click',mapClick);}
 const oldAdvance=window.advanceDay;
 if(typeof oldAdvance==='function'&&!window.__uilemEcologyAdvanceWrapped){
  window.__uilemEcologyAdvanceWrapped=true;
@@ -205,9 +259,9 @@ if(typeof oldAdvance==='function'&&!window.__uilemEcologyAdvanceWrapped){
   const beforeYear=Number(G.year)||1,beforeMonth=Number(G.month)||1,beforeDay=Number(G.day)||1;
   insideAdvance=true;
   try{oldAdvance();}finally{insideAdvance=false;}
-  if(dateStamp()!==[beforeDay,beforeMonth,beforeYear].join('.')){dailyTick();save();if(G.tab==='livingPlants')render();}
+  if(dateStamp()!==[beforeDay,beforeMonth,beforeYear].join('.')){dailyTick();save();if(G.tab==='livingPlants')render();}renderMap();
  };
 }
-window.UilemEcology={catalog:CATALOG,render,dailyTick,plant,water,feed,prune,harvest,remove:removePlant};
-save();if(G.tab==='livingPlants')render();
+window.UilemEcology={catalog:CATALOG,render,dailyTick,plant,locate,placeAt,cancelLocate,renderMap,water,feed,prune,harvest,remove:removePlant};
+save();renderMap();if(G.tab==='livingPlants')render();
 })();

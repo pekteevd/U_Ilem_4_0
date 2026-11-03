@@ -38,6 +38,7 @@
   function install(id){
     const item=G.lighting.stock.find(x=>x.id===id);if(!item)return;
     if(window.UilemProduction&&typeof window.UilemProduction.cancelPlacement==='function')window.UilemProduction.cancelPlacement(true);
+    if(window.UilemEcology&&typeof window.UilemEcology.cancelLocate==='function')window.UilemEcology.cancelLocate(true);
     G.lighting.pending=id;$('scene')?.classList.add('placing');
     toast('Выбери точку установки на карте');
   }
