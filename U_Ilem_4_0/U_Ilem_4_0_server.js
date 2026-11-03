@@ -11,7 +11,6 @@ const ROOT = __dirname;
 const MAIN_HTML = path.join(ROOT, 'U_Ilem_4_0_base.html');
 const LAUNCHER_HTML = path.join(ROOT, 'U_Ilem_4_0.html');
 const LIGHTING_JS = 'U_Ilem_4_0_lighting.js';
-const INTERIORS_JS = 'U_Ilem_4_0_interiors.js';
 const ECOLOGY_JS = 'U_Ilem_4_0_ecology.js';
 const WATER_JS = 'U_Ilem_4_0_water.js';
 const PRODUCTION_JS = 'U_Ilem_4_0_production.js';
@@ -237,7 +236,6 @@ async function handler(req, res) {
 
         const moduleTags = [
           '<script src="/' + LIGHTING_JS + '"></script>',
-          '<script src="/' + INTERIORS_JS + '"></script>',
           '<script src="/' + ECOLOGY_JS + '"></script>',
           '<script src="/' + WATER_JS + '"></script>',
           '<script src="/' + PRODUCTION_JS + '"></script>',
