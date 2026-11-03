@@ -124,19 +124,38 @@ async function handler(req, res) {
   try { pathname = decodeURIComponent(url.pathname); }
   catch { return json(res, 400, { error: 'Некорректный путь' }); }
   if (pathname === '/') pathname = '/U_Ilem.html';
-  const filePath = path.resolve(ROOT, `.${pathname}`);
-  if (!filePath.startsWith(ROOT + path.sep) && filePath !== path.join(ROOT, 'U_Ilem.html')) return json(res, 403, { error: 'Доступ запрещён' });
+  // Главная игра берётся из проверенной версии 3.2 в корне репозитория.
+  // Её карта и исходный HTML не переписываются. Новые системы подключаются отдельными модулями.
+  const isMainGame = pathname === '/U_Ilem.html';
+  const filePath = isMainGame
+    ? path.resolve(ROOT, '../U_Ilem_3_2.html')
+    : path.resolve(ROOT, `.${pathname}`);
+  if (!isMainGame && !filePath.startsWith(ROOT + path.sep)) return json(res, 403, { error: 'Доступ запрещён' });
   fs.stat(filePath, (err, stat) => {
     if (err || !stat.isFile()) return json(res, 404, { error: 'Файл не найден' });
-    const type = MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
+    const type = isMainGame ? MIME['.html'] : (MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream');
     res.writeHead(200, {
       'Content-Type': type,
-      'Content-Length': stat.size,
       'Cache-Control': 'no-store',
       'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'no-referrer'
     });
-    if (req.method === 'HEAD') return res.end();
+    if (req.method === 'HEAD') {
+      res.setHeader('Content-Length', stat.size + (isMainGame ? 39 : 0));
+      return res.end();
+    }
+    if (isMainGame) {
+      fs.readFile(filePath, (readErr, data) => {
+        if (readErr) return json(res, 500, { error: 'Не удалось открыть основной файл игры' });
+        const source = data.toString('utf8');
+        const injected = source.replace('</body>', '<script src="/lighting.js"></script></body>');
+        const body = Buffer.from(injected, 'utf8');
+        res.setHeader('Content-Length', body.length);
+        res.end(body);
+      });
+      return;
+    }
+    res.setHeader('Content-Length', stat.size);
     fs.createReadStream(filePath).pipe(res);
   });
 }
