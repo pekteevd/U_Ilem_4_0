@@ -68,6 +68,7 @@ function plant(speciesId){
 }
 function locate(id){
  ensure();
+ if(typeof window.cancelMapPlacement==='function')window.cancelMapPlacement();
  const p=G.garden.livingPlants.find(x=>Number(x.id)===Number(id));
  if(!p||p.status==='Удалено')return toast('Растение не найдено в активном саду.');
  if(window.UilemProduction&&typeof window.UilemProduction.cancelPlacement==='function')window.UilemProduction.cancelPlacement(true);

@@ -15,6 +15,7 @@ const INTERIORS_JS = 'U_Ilem_4_0_interiors.js';
 const ECOLOGY_JS = 'U_Ilem_4_0_ecology.js';
 const WATER_JS = 'U_Ilem_4_0_water.js';
 const PRODUCTION_JS = 'U_Ilem_4_0_production.js';
+const CONSTRUCTION_JS = 'U_Ilem_4_0_construction.js';
 const MODEL = 'qwen3:4b';
 const OLLAMA = 'http://127.0.0.1:11434';
 
@@ -239,7 +240,8 @@ async function handler(req, res) {
           '<script src="/' + INTERIORS_JS + '"></script>',
           '<script src="/' + ECOLOGY_JS + '"></script>',
           '<script src="/' + WATER_JS + '"></script>',
-          '<script src="/' + PRODUCTION_JS + '"></script>'
+          '<script src="/' + PRODUCTION_JS + '"></script>',
+          '<script src="/' + CONSTRUCTION_JS + '"></script>'
         ];
         for (const tag of moduleTags) {
           if (!html.includes(tag)) {

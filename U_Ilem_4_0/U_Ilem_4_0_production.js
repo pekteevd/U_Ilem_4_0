@@ -125,6 +125,8 @@ function transferToInterior(stockId,buildingId){
   return false;
  }
  const target=buildingId||ui.interiorBuilding;
+ const construction=G.constructionProjects&&G.constructionProjects[target];
+ if(construction&&construction.status!=='Готово'){say('Сначала заверши строительство здания. Мебель можно передать после четвёртого этапа.');return false;}
  const ok=window.UilemInteriors.receiveCraftedFurniture(goods.type,target,goods.name);
  if(!ok){say('Не удалось передать изделие в интерьер.');return false;}
  G.production.stock=G.production.stock.filter(x=>String(x.id)!==String(stockId));
@@ -134,6 +136,7 @@ function transferToInterior(stockId,buildingId){
 }
 function startPlacement(stockId){
  ensure();
+ if(typeof window.cancelMapPlacement==='function')window.cancelMapPlacement();
  const goods=G.production.stock.find(x=>String(x.id)===String(stockId));
  if(!goods)return false;
  const r=recipe(goods.recipeId);
