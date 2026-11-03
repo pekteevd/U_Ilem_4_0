@@ -96,7 +96,7 @@ function createTask(){
 }
 function saveNewTask(){
  const val=id=>$(id)?.value??'',title=String(val('ilemNewTaskTitle')).trim();if(!title){tell('Введи название задачи.');return false;}
- const resources=String(val('ilemNewTaskResources')).split(/\\r?\\n/).map(line=>{const m=line.match(/^(.+?)\\s*:\\s*(\\d+(?:[.,]\\d+)?)$/);return m?{name:m[1].trim(),qty:Number(m[2].replace(',','.'))}:null;}).filter(Boolean);
+ const resources=String(val('ilemNewTaskResources')).split(/\r?\n/).map(line=>{const m=line.match(/^(.+?)\s*:\s*(\d+(?:[.,]\d+)?)$/);return m?{name:m[1].trim(),qty:Number(m[2].replace(',','.'))}:null;}).filter(Boolean);
  const task={id:nextId(),title,description:String(val('ilemNewTaskDescription')),notes:String(val('ilemNewTaskDescription')),person:String(val('ilemNewTaskPerson'))||'Не назначен',responsible:String(val('ilemNewTaskPerson'))||'Не назначен',object:String(val('ilemNewTaskObject'))||null,dueDate:String(val('ilemNewTaskDue')).trim()||null,priority:String(val('ilemNewTaskPriority'))||'Плановый',hours:Math.max(0,num(val('ilemNewTaskHours'),1)),stageId:String(val('ilemNewTaskStage'))||null,resources,materials:resources.map(x=>[x.name,x.qty]),status:'На согласовании',source:'Календарь · пользовательская задача',actions:[],purchases:[],calendarKey:'calendar:custom:'+year()+':'+month()+':'+title.toLowerCase(),calendarMonth:month(),calendarYear:year(),calendarSeason:season(),createdAt:date()};
  if(G.tasks.some(t=>t.calendarKey===task.calendarKey)){tell('Такая задача уже есть в плане месяца.');return false;}
  G.tasks.push(task);save();if(typeof window.closeModal==='function')window.closeModal();refresh();tell('Задача создана и добавлена на общую доску.');return task.id;
@@ -116,7 +116,8 @@ function render(){
   '<p class="small">Добавленная рекомендация исчезает из списка предложений и остаётся одной записью в календаре и общей доске задач.</p>';
 }
 
-function objectNameForTask(id){return G.objects&&G.objects[id]?G.objects[id].name:String(id||'Объект');}\nfunction openTaskReview(id){
+function objectNameForTask(id){return G.objects&&G.objects[id]?G.objects[id].name:String(id||'Объект');}
+function openTaskReview(id){
  const t=G.tasks.find(x=>String(x.id)===String(id));if(!t){tell('Задача не найдена.');return false;}
  const objects=Object.entries(G.objects||{}).map(([key,o])=>'<option value="'+h(key)+'"'+(String(t.object||'')===String(key)?' selected':'')+'>'+h(o.name||key)+'</option>').join('');
  const people=(G.people||[]).map(p=>'<option value="'+h(p.name)+'"'+(String(t.person||'')===String(p.name)?' selected':'')+'>'+h(p.name)+'</option>').join('');
@@ -135,7 +136,10 @@ function objectNameForTask(id){return G.objects&&G.objects[id]?G.objects[id].nam
  '<label class="field">Приоритет<select id="ilemTaskPriority">'+['Низкий','Плановый','Высокий','Срочный'].map(x=>'<option'+(String(t.priority||'Плановый')===x?' selected':'')+'>'+x+'</option>').join('')+'</select></label>'+
  '<label class="field">Статус<select id="ilemTaskStatus">'+statusHtml+'</select></label>'+
  '<label class="field">Трудоёмкость, ч<input id="ilemTaskHours" type="number" min="0" step="0.5" value="'+Math.max(0,num(t.hours,1))+'"></label></div>'+
- '<label class="field">Связанный этап<select id="ilemTaskStage"><option value="">Без отдельного этапа</option>'+stages+'</select></label>'+\n '<label class="field">Участники<select id="ilemTaskParticipants" multiple size="'+Math.min(4,Math.max(2,(G.people||[]).length))+'">'+participants+'</select></label>'+\n '<label class="field">Материалы и ресурсы<textarea id="ilemTaskResources" rows="3" placeholder="Доска: 4\nКраска: 1">'+h(resourceText)+'</textarea></label>'+\n '<div class="actions"><button onclick="closeModal()">Закрыть</button><button onclick="ilemSaveTaskReview(\''+h(String(t.id))+'\')">Сохранить изменения</button></div>';
+ '<label class="field">Связанный этап<select id="ilemTaskStage"><option value="">Без отдельного этапа</option>'+stages+'</select></label>'+
+ '<label class="field">Участники<select id="ilemTaskParticipants" multiple size="'+Math.min(4,Math.max(2,(G.people||[]).length))+'">'+participants+'</select></label>'+
+ '<label class="field">Материалы и ресурсы<textarea id="ilemTaskResources" rows="3" placeholder="Доска: 4\nКраска: 1">'+h(resourceText)+'</textarea></label>'+
+ '<div class="actions"><button onclick="closeModal()">Закрыть</button><button onclick="ilemSaveTaskReview(\''+h(String(t.id))+'\')">Сохранить изменения</button></div>';
  if(typeof window.modal==='function')window.modal(html);else if(typeof modal==='function')modal(html);
  return true;
 }
@@ -148,7 +152,7 @@ function saveTaskReview(id){
  t.dueDate=String(value('ilemTaskDue')).trim()||null;t.priority=String(value('ilemTaskPriority'))||'Плановый';
  t.stageId=String(value('ilemTaskStage'))||null;
  const participantEl=$('ilemTaskParticipants');t.participants=participantEl?Array.from(participantEl.selectedOptions).map(x=>x.value):[];
- t.resources=String(value('ilemTaskResources')).split(/\\r?\\n/).map(line=>{const m=line.match(/^(.+?)\\s*:\\s*(\\d+(?:[.,]\\d+)?)$/);return m?{name:m[1].trim(),qty:Number(m[2].replace(',','.'))}:null;}).filter(Boolean);t.materials=t.resources.map(x=>[x.name,x.qty]);
+ t.resources=String(value('ilemTaskResources')).split(/\r?\n/).map(line=>{const m=line.match(/^(.+?)\s*:\s*(\d+(?:[.,]\d+)?)$/);return m?{name:m[1].trim(),qty:Number(m[2].replace(',','.'))}:null;}).filter(Boolean);t.materials=t.resources.map(x=>[x.name,x.qty]);
  t.status=String(value('ilemTaskStatus'))||'На согласовании';t.hours=Math.max(0,num(value('ilemTaskHours'),1));
  t.updatedAt=date();save();if(typeof window.closeModal==='function')window.closeModal();
  renderBoard();if(G.tab==='calendar')render();if(typeof window.renderTasks==='function')window.renderTasks();
