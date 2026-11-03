@@ -1,6 +1,5 @@
 {
   "htmlBytes": 5159407,
-  "inlineScriptCount": 4,
   "scripts": [
     {
       "index": 1,
@@ -28,6 +27,22 @@
       "bytes": 15604,
       "parts": [
         "script-04-part-01.js.txt"
+      ]
+    }
+  ],
+  "styles": [
+    {
+      "index": 1,
+      "bytes": 7831,
+      "parts": [
+        "style-01-part-01.css.txt"
+      ]
+    },
+    {
+      "index": 2,
+      "bytes": 2535,
+      "parts": [
+        "style-02-part-01.css.txt"
       ]
     }
   ]
