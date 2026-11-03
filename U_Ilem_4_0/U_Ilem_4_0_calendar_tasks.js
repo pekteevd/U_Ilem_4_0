@@ -160,14 +160,44 @@ function saveTaskReview(id){
  if(typeof window.renderObject==='function')window.renderObject();
  tell('Задача сохранена.');return true;
 }
+
+function taskNeeds(t){
+ const raw=Array.isArray(t.resources)&&t.resources.length?t.resources:(Array.isArray(t.materials)?t.materials:[]);
+ const sums={};raw.forEach(x=>{const name=Array.isArray(x)?x[0]:x.name,qty=Array.isArray(x)?x[1]:x.qty;if(name&&num(qty)>0)sums[String(name)]=(sums[String(name)]||0)+num(qty);});
+ return Object.entries(sums).map(([name,qty])=>({name,qty}));
+}
+function taskShortages(t){
+ return taskNeeds(t).map(x=>{const item=(G.inventory||[]).find(i=>String(i.name).toLowerCase()===x.name.toLowerCase());const have=item?Math.max(0,num(item.qty)-num(item.reserved)):0;return {...x,have,missing:Math.max(0,x.qty-have),price:num(item&&item.price,300),unit:item&&item.unit||'шт'};}).filter(x=>x.missing>0);
+}
+function openTaskPurchase(id){
+ const t=G.tasks.find(x=>String(x.id)===String(id));if(!t)return false;
+ const rows=taskShortages(t),total=rows.reduce((sum,x)=>sum+x.missing*x.price,0);
+ if(!rows.length){tell('Все материалы для задачи уже есть на складе.');return false;}
+ const html='<h2>Закупка для задачи</h2><p><b>'+h(t.title)+'</b></p>'+rows.map(x=>'<div class="row"><span>'+h(x.name)+'<br><small>Нужно '+x.qty+' '+h(x.unit)+', есть '+x.have+', докупить '+x.missing+'</small></span><b>'+money(x.missing*x.price)+'</b></div>').join('')+
+ '<div class="tile"><small>Общая стоимость закупки</small><b>'+money(total)+'</b><small>Доступно: '+money(G.cash)+'</small></div><div class="actions"><button onclick="closeModal()">Отмена</button><button onclick="ilemConfirmTaskPurchase(\\''+h(String(t.id))+'\\')">Подтвердить закупку</button></div>';
+ if(typeof window.modal==='function')window.modal(html);else if(typeof modal==='function')modal(html);return true;
+}
+function confirmTaskPurchase(id){
+ const t=G.tasks.find(x=>String(x.id)===String(id));if(!t)return false;
+ const rows=taskShortages(t),total=rows.reduce((sum,x)=>sum+x.missing*x.price,0);
+ if(!rows.length){tell('Недостающих материалов нет.');return false;}
+ if(num(G.cash)<total){tell('Недостаточно денег для закупки. Не хватает '+money(total-num(G.cash))+'.');return false;}
+ rows.forEach((x,i)=>{let item=(G.inventory||[]).find(v=>String(v.name).toLowerCase()===x.name.toLowerCase());if(!item){item={id:Date.now()+i,name:x.name,unit:x.unit,qty:0,price:x.price,cat:'materials',reserved:0,used:0};G.inventory.push(item);}item.qty=num(item.qty)+x.missing;});
+ G.cash-=total;t.purchases=Array.isArray(t.purchases)?t.purchases:[];t.purchases.push(...rows.map(x=>({name:x.name,qty:x.missing,price:x.price,status:'Куплено',date:date()})));
+ t.purchasesBoughtAt=date();if(typeof log==='function')log('Закуплены материалы для задачи «'+t.title+'» на '+money(total)+'.');
+ save();if(typeof window.closeModal==='function')window.closeModal();renderBoard();if(G.tab==='calendar')render();if(typeof window.renderStats==='function')window.renderStats();tell('Материалы закуплены и добавлены на склад.');return true;
+}
+
 function renderBoard(){
  const el=$('liveTasks');if(!el)return;
  const tasks=G.tasks.slice().sort((a,b)=>Number(b.createdAtMs||b.id||0)-Number(a.createdAtMs||a.id||0));
  el.innerHTML=tasks.length?tasks.map(t=>{
   const object=t.object&&G.objects&&G.objects[t.object]?G.objects[t.object].name:'Без объекта';
+  const shortage=taskShortages(t),stage=t.stageId&&(G.stages||[]).find(s=>String(s.id)===String(t.stageId));
   return '<div class="taskline"><b>'+h(t.title)+'</b><div class="taskmeta"><span class="badge">'+h(t.person||'Не назначен')+'</span><span class="badge">'+h(t.status||'На согласовании')+'</span><span class="badge">'+h(t.priority||'Плановый')+'</span><span class="badge">'+h(object)+'</span></div>'+
+  (stage?'<div class="taskmeta">Этап: '+h(stage.title)+' · '+num(stage.progress)+'%</div>':'')+(taskNeeds(t).length?'<div class="taskmeta">Материалы: '+(shortage.length?'не хватает '+shortage.map(x=>h(x.name)+' '+x.missing).join(', '):'достаточно на складе')+'</div>':'')+
   '<div class="actions"><button onclick="openTaskReview(\''+h(String(t.id))+'\')">Открыть / изменить</button>'+
-  (t.status==='На согласовании'?'<button onclick="ilemSetTaskStatus(\''+h(String(t.id))+'\',\'Запланирована\')">Утвердить</button>':'')+
+  (shortage.length?'<button onclick="ilemTaskPurchase(\''+h(String(t.id))+'\')">Закупить недостающее</button>':'')+(t.status==='На согласовании'?'<button onclick="ilemSetTaskStatus(\''+h(String(t.id))+'\',\'Запланирована\')">Утвердить</button>':'')+
   (t.status==='Запланирована'||t.status==='Отложена'?'<button onclick="ilemSetTaskStatus(\''+h(String(t.id))+'\',\'В работе\')">Начать</button>':'')+
   (t.status==='В работе'?'<button onclick="ilemSetTaskStatus(\''+h(String(t.id))+'\',\'Выполнена\')">Завершить</button>':'')+
   (t.status==='Выполнена'?'<button onclick="ilemSetTaskStatus(\''+h(String(t.id))+'\',\'Запланирована\')">Открыть повторно</button>':'')+
@@ -195,6 +225,8 @@ window.ilemSaveNewTask=saveNewTask;
 window.openTaskReview=openTaskReview;
 window.ilemSaveTaskReview=saveTaskReview;
 window.ilemSetTaskStatus=setTaskStatus;
+window.ilemTaskPurchase=openTaskPurchase;
+window.ilemConfirmTaskPurchase=confirmTaskPurchase;
 window.renderLiveTasks=renderBoard;
 window.approveTask=id=>setTaskStatus(id,'Запланирована');
 window.dropTask=id=>setTaskStatus(id,'Отклонена');
