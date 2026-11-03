@@ -25,6 +25,8 @@ jobs:
           node --check U_Ilem_4_0_production.test.js
           node --check U_Ilem_4_0_calendar_tasks.js
           node --check U_Ilem_4_0_calendar_tasks.test.js
+          node --check U_Ilem_4_0_map_ui.js
+          node --check U_Ilem_4_0_map_ui.test.js
       - name: Production tests
         id: production
         continue-on-error: true
@@ -33,6 +35,10 @@ jobs:
         id: calendar
         continue-on-error: true
         run: cd U_Ilem_4_0 && node U_Ilem_4_0_calendar_tasks.test.js
+      - name: Map and selected-object tests
+        id: map
+        continue-on-error: true
+        run: cd U_Ilem_4_0 && node U_Ilem_4_0_map_ui.test.js
       - name: Water tests
         id: water
         continue-on-error: true
@@ -100,6 +106,7 @@ jobs:
           WATER: ${{ steps.water.outcome }}
           ECOLOGY: ${{ steps.ecology.outcome }}
           CONSTRUCTION: ${{ steps.construction.outcome }}
+          MAP: ${{ steps.map.outcome }}
         run: |
-          echo "production=$PRODUCTION calendar=$CALENDAR water=$WATER ecology=$ECOLOGY construction=$CONSTRUCTION"
-          test "$PRODUCTION" = "success" -a "$CALENDAR" = "success" -a "$WATER" = "success" -a "$ECOLOGY" = "success" -a "$CONSTRUCTION" = "success"
+          echo "production=$PRODUCTION calendar=$CALENDAR map=$MAP water=$WATER ecology=$ECOLOGY construction=$CONSTRUCTION"
+          if [[ "$PRODUCTION" != "success" || "$CALENDAR" != "success" || "$MAP" != "success" || "$WATER" != "success" || "$ECOLOGY" != "success" || "$CONSTRUCTION" != "success" ]]; then exit 1; fi
