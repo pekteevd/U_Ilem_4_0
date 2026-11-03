@@ -107,6 +107,13 @@ if(typeof previousRenderObject==='function')window.renderObject=function(){
    break;
   }
  }
+ const linked=(G.tasks||[]).filter(t=>String(t.object)===String(G.selected));
+ if(linked.length){
+  const active=linked.filter(t=>['На согласовании','Запланирована','В работе','Отложена'].includes(t.status));
+  const done=linked.filter(t=>t.status==='Выполнена');
+  const latest=active[active.length-1];
+  box.innerHTML+='<div class="tile object-task-summary"><small>Связанные задачи</small><b>'+active.length+' активных · '+done.length+' завершённых</b>'+(latest?'<p class="small">'+esc(latest.title)+' · '+esc(latest.status)+'</p>':'')+'</div>';
+ }
 };
 window.openStage=openObjectStages;
 window.ilemOpenStageById=openStageDetails;
