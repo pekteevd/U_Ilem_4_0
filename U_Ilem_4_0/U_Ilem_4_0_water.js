@@ -138,9 +138,10 @@ function dailyTick(){
  ensure();const s=G.waterSystem,stamp=date();if(s.lastProcessedDay===stamp)return false;
  s.lastProcessedDay=stamp;s.manualDrawnToday=0;
  const need=demand(),capacity=cap();let produced=0,energy=0;
- if(need>0&&s.pump&&online()&&!s.powerBlocked){
-  const refill=Math.max(0,capacity-s.storageLitres)+Math.max(0,need-s.storageLitres);
-  produced=Math.min(n(s.pump.flow),refill);
+ if(s.pump&&online()&&!s.powerBlocked){
+  // Pump supplies today's demand and restores the reserve after consumption.
+  const refillTarget=need+Math.max(0,capacity-s.storageLitres);
+  produced=Math.min(n(s.pump.flow),refillTarget);
   if(s.pump.watt&&produced>0){energy=n(s.pump.watt)*2/1000;s.monthEnergyKwh+=energy;}
  }
  const available=s.storageLitres+produced,served=Math.min(available,need),shortage=Math.max(0,need-served);
