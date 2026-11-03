@@ -99,5 +99,16 @@ test('lighting and workshop placement modes do not overlap',()=>{
  P.cancelPlacement();
 });
 test('history and save hooks are used',()=>{assert.ok(G.production.history.length>=4);assert.ok(saves>=5);});
+test('new building accepts furniture only after construction completion',()=>{
+ G.interiorPlans.newBuilding={width:6,height:4,stock:[],nextId:1,history:[]};
+ G.constructionProjects={newBuilding:{status:'Строительство · 2/4'}};
+ const good=G.production.stock.find(x=>x.recipeId==='chair');
+ assert.ok(good);
+ assert.equal(P.transferToInterior(good.id,'newBuilding'),false);
+ assert.ok(G.production.stock.some(x=>x.id===good.id));
+ G.constructionProjects.newBuilding.status='Готово';
+ assert.equal(P.transferToInterior(good.id,'newBuilding'),true);
+ assert.equal(G.interiorPlans.newBuilding.stock[0].type,'chair');
+});
 if(process.exitCode)process.exit(process.exitCode);
 process.stdout.write('Production system: '+checks+'/12 checks passed. Saves: '+saves+'.\n');
