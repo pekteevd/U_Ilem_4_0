@@ -67,7 +67,8 @@ function install(){
  const pLoc=gl.getAttribLocation(program,'p'),cLoc=gl.getAttribLocation(program,'c');
  const pBuf=gl.createBuffer(),cBuf=gl.createBuffer();
  let W=1,H=1,mode='select',selected=G.selected?String(G.selected):null,drag=null,meshes=[];
- function project(x,y,z){return [x, y-z*.95];}
+ function worldAnchor(sx,sy){const dx=(sx-W/2)/.7071,dy=(sy-H/2)/.3536;return {x:W/2+(dx+dy)/2,y:H/2+(dy-dx)/2};}
+ function project(x,y,z){return [W/2+(x-y)*.7071,H/2+(x+y)*.3536-z*.95];}
  function screen(x,y,z){const p=project(x,y,z);return [(p[0]/W)*2-1,1-(p[1]/H)*2];}
  function pushTri(out,a,b,c,color,alpha){const n=hex(color);[a,b,c].forEach(v=>{const q=screen(v[0],v[1],v[2]);out.pos.push(q[0],q[1]);out.col.push(n[0],n[1],n[2],alpha===undefined?1:alpha);});}
  function quad(out,a,b,c,d,color){pushTri(out,a,b,c,color);pushTri(out,a,c,d,color);}
@@ -96,7 +97,7 @@ function install(){
  }
  function shadow(out,x,y,rx,ry){const center=[x,y,0],steps=12;for(let i=0;i<steps;i++){const a=i*Math.PI*2/steps,b=(i+1)*Math.PI*2/steps;pushTri(out,center,[x+Math.cos(a)*rx,y+Math.sin(a)*ry,0],[x+Math.cos(b)*rx,y+Math.sin(b)*ry,0],'#514a3d',.22);}}
  function buildObject(out,o,idx){
-  const t=TYPES[normalizeType(o.type)]||TYPES.shed,x=o.x*W,y=o.y*H,s=clamp(Number(o.scale)||1,.4,2.5),z=0;
+  const t=TYPES[normalizeType(o.type)]||TYPES.shed,anchor=worldAnchor(o.x*W,o.y*H),x=anchor.x,y=anchor.y,s=clamp(Number(o.scale)||1,.4,2.5),z=0;
   // Ground shadow is a translucent flattened polygon, separate from the solid mesh.
   const w=t.w*s,d=t.d*s,h=t.h*s;
   const unit=Math.min(W,H)/120; const uw=w*unit,ud=d*unit,uh=h*unit;
