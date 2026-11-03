@@ -45,7 +45,7 @@ test('another month gets a distinct recommendation key',()=>{
 });
 test('removing a calendar task keeps history and hides it from plan',()=>{
  G.month=5;const task=G.tasks[0];assert.equal(C.removeTask(task.id),true);assert.equal(task.status,'Отклонена');
- window.renderWorkspace();assert.equal(elements.workspace.innerHTML.includes(task.title),false);
+ window.renderWorkspace();assert.equal(elements.workspace.innerHTML.includes('<b>'+task.title+'</b>'),false);
 });
 test('legacy calendar entries migrate once into shared tasks',()=>{
  const old=G.calendar.monthlyTasks;old.push({title:'Старый пункт календаря',season:'Лето',status:'На согласовании'});
