@@ -98,6 +98,19 @@ jobs:
           }
           const baseImages = imageStats(html);
           const approvedImages = imageStats(approved);
+          const approvedImageMatch = approved.match(/data:image\\/png;base64,([A-Za-z0-9+/=]+)/);
+          if (approvedImageMatch) {
+            const imageDir = path.join(dir, 'approved-map-image');
+            fs.mkdirSync(imageDir, { recursive: true });
+            const base64 = approvedImageMatch[1];
+            const parts = [];
+            for (let start = 0, index = 1; start < base64.length; start += 120000, index++) {
+              const name = 'part-' + String(index).padStart(2,'0') + '.txt';
+              fs.writeFileSync(path.join(imageDir, name), base64.slice(start, start + 120000));
+              parts.push(name);
+            }
+            fs.writeFileSync(path.join(imageDir, 'manifest.json'), JSON.stringify({ mime:'image/png', base64Length:base64.length, parts }, null, 2));
+          }
           const baseHashes = new Set(baseImages.map(x => x.sha256));
           const approvedHashes = new Set(approvedImages.map(x => x.sha256));
           fs.writeFileSync(path.join(dir, 'map-assets.json'), JSON.stringify({
