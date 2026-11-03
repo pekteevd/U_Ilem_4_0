@@ -10,6 +10,7 @@ const PORT = Number(process.env.UILEM_PORT || 4320);
 const ROOT = __dirname;
 const MAIN_HTML = path.join(ROOT, 'U_Ilem_4_0.html');
 const LIGHTING_JS = 'U_Ilem_4_0_lighting.js';
+const INTERIORS_JS = 'U_Ilem_4_0_interiors.js';
 const MODEL = 'qwen3:4b';
 const OLLAMA = 'http://127.0.0.1:11434';
 
@@ -196,12 +197,30 @@ async function handler(req, res) {
       fs.readFile(MAIN_HTML, (readError, buffer) => {
         if (readError) return sendJson(res, 500, { error: 'Cannot read main game file' });
         let html = buffer.toString('utf8');
-        const lightingTag = '<script src="/' + LIGHTING_JS + '"></script>';
-        if (!html.includes(lightingTag)) {
-          if (/<\/body\s*>/i.test(html)) {
-            html = html.replace(/<\/body\s*>/i, lightingTag + '</body>');
-          } else {
-            html += lightingTag;
+
+        // 3.2 is kept as the source file; the served game is version 4.0.
+        html = html.replace('<title>У Илем 3.2 | Живая усадьба</title>',
+          '<title>У Илем 4.0 | Живая усадьба</title>');
+        html = html.replace('<span style="color:#e5bd70">3.0</span>',
+          '<span style="color:#e5bd70">4.0</span>');
+
+        // Read a 3.x save as migration input once; all subsequent writes use uilem4save.
+        html = html.replace(
+          "G=JSON.parse(localStorage.getItem('uilem3save'))||fresh()",
+          "G=JSON.parse(localStorage.getItem('uilem4save'))||JSON.parse(localStorage.getItem('uilem3save'))||fresh()"
+        );
+        html = html.split("localStorage.setItem('uilem3save'")
+          .join("localStorage.setItem('uilem4save'");
+
+        const moduleTags = [
+          '<script src="/' + LIGHTING_JS + '"></script>',
+          '<script src="/' + INTERIORS_JS + '"></script>'
+        ];
+        for (const tag of moduleTags) {
+          if (!html.includes(tag)) {
+            const bodyIndex = html.lastIndexOf('</body>');
+            if (bodyIndex >= 0) html = html.slice(0, bodyIndex) + tag + html.slice(bodyIndex);
+            else html += tag;
           }
         }
         const iconTag = '<link rel="icon" href="/U_Ilem_4_0.ico" type="image/x-icon">';
