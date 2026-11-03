@@ -36,11 +36,6 @@ if not exist "%~dp0U_Ilem_4_0_lighting.js" (
     pause
     exit /b 1
 )
-if not exist "%~dp0U_Ilem_4_0_interiors.js" (
-    echo ERROR: U_Ilem_4_0_interiors.js was not found.
-    pause
-    exit /b 1
-)
 if not exist "%~dp0U_Ilem_4_0_ecology.js" (
     echo ERROR: U_Ilem_4_0_ecology.js was not found.
     pause
@@ -58,6 +53,32 @@ if not exist "%~dp0U_Ilem_4_0_production.js" (
 )
 if not exist "%~dp0U_Ilem_4_0_construction.js" (
     echo ERROR: U_Ilem_4_0_construction.js was not found.
+    pause
+    exit /b 1
+)
+if not exist "%~dp0U_Ilem_4_0_repairs.js" (
+    echo ERROR: U_Ilem_4_0_repairs.js was not found.
+    pause
+    exit /b 1
+)
+if not exist "%~dp0U_Ilem_4_0_operations.js" (
+    echo ERROR: U_Ilem_4_0_operations.js was not found.
+    pause
+    exit /b 1
+)
+if not exist "%~dp0U_Ilem_4_0_ollama.js" (
+    echo ERROR: U_Ilem_4_0_ollama.js was not found.
+    pause
+    exit /b 1
+)
+if not exist "%~dp0U_Ilem_4_0_3d.js" (
+    echo ERROR: U_Ilem_4_0_3d.js was not found.
+    pause
+    exit /b 1
+)
+if not exist "%~dp0..\U_Ilem_3_0_APPROVED_MAP.html" (
+    echo ERROR: Approved map U_Ilem_3_0_APPROVED_MAP.html was not found one folder above.
+    echo Keep the approved map file in the repository root.
     pause
     exit /b 1
 )
