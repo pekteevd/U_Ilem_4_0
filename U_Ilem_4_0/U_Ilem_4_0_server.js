@@ -123,8 +123,7 @@ async function handleChat(req, res) {
 }
 
 function safeStaticPath(pathname) {
-  const decoded = decodeURIComponent(pathname);
-  const resolved = path.resolve(ROOT, '.' + decoded);
+  const resolved = path.resolve(ROOT, '.' + pathname);
   const relative = path.relative(ROOT, resolved);
   if (relative.startsWith('..') || path.isAbsolute(relative)) return null;
   return resolved;
@@ -192,14 +191,6 @@ async function handler(req, res) {
     }
 
     const type = MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
-    res.writeHead(200, {
-      'Content-Type': isMain ? MIME['.html'] : type,
-      'Cache-Control': isMain ? 'no-store' : 'public, max-age=300',
-      'X-Content-Type-Options': 'nosniff',
-      'Referrer-Policy': 'no-referrer'
-    });
-
-    if (req.method === 'HEAD') return res.end();
 
     if (isMain) {
       fs.readFile(MAIN_HTML, (readError, buffer) => {
@@ -218,13 +209,27 @@ async function handler(req, res) {
           html = html.replace(/<\/head\s*>/i, iconTag + '</head>');
         }
         const output = Buffer.from(html, 'utf8');
-        res.setHeader('Content-Length', output.length);
+        res.writeHead(200, {
+          'Content-Type': MIME['.html'],
+          'Content-Length': output.length,
+          'Cache-Control': 'no-store',
+          'X-Content-Type-Options': 'nosniff',
+          'Referrer-Policy': 'no-referrer'
+        });
+        if (req.method === 'HEAD') return res.end();
         res.end(output);
       });
       return;
     }
 
-    res.setHeader('Content-Length', stat.size);
+    res.writeHead(200, {
+      'Content-Type': type,
+      'Content-Length': stat.size,
+      'Cache-Control': 'public, max-age=300',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'no-referrer'
+    });
+    if (req.method === 'HEAD') return res.end();
     fs.createReadStream(filePath).pipe(res);
   });
 }
