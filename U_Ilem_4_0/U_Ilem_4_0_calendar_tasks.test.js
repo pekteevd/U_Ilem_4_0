@@ -69,4 +69,4 @@ test('task completion consumes its linked materials',()=>{
  const t=G.tasks.find(x=>x.title==='Покрасить входную дверь');assert.equal(window.ilemSetTaskStatus(t.id,'Выполнена'),true);assert.equal(G.inventory[0].qty,0);assert.equal(t.status,'Выполнена');
 });
 if(process.exitCode)process.exit(process.exitCode);
-process.stdout.write('Calendar/task integration: '+checks+'/7 checks passed. Saves: '+saves+'.\n');
+process.stdout.write('Calendar/task integration: '+checks+'/11 checks passed. Saves: '+saves+'.\n');
