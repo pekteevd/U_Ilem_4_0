@@ -87,6 +87,9 @@ node U_Ilem_4_0_water.test.js
 node U_Ilem_4_0_production.test.js
 node U_Ilem_4_0_ecology.test.js
 node U_Ilem_4_0_construction.test.js
+node U_Ilem_4_0_repairs.test.js
+node U_Ilem_4_0_operations.test.js
+node U_Ilem_4_0_ollama.test.js
 
 Синтаксические и модульные тесты не заменяют запуск BAT и визуальную
 проверку Chrome на компьютере пользователя.
