@@ -99,6 +99,7 @@ window.addConsolidatedPurchaseButton=function(){
 window.openConsolidatedPurchase=openSummary;
 window.confirmConsolidatedPurchase=function(){
  const list=buildList().filter(x=>x.toBuy>0),total=list.reduce((s,x)=>s+x.sum,0);
+ if(list.some(x=>x.price<=0))return say('Сначала укажи цену для материалов без цены.');
  if(!list.length){say('Недостающих материалов нет.');closeModal();return;}
  if(total>Number(G.cash||0))return say('Недостаточно денег для сводной закупки.');
  if(!confirm('Закупить '+list.length+' позиций на '+Math.round(total).toLocaleString('ru-RU')+' ₽?'))return;
