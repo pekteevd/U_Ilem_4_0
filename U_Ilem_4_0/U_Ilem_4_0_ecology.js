@@ -66,7 +66,7 @@ function plant(speciesId){
 }
 function water(id){
  const p=G.garden.livingPlants.find(x=>Number(x.id)===Number(id));if(!p)return;
- const who=person();if(!charge(who,.5,0,1))return;
+ if(window.UilemWater&&!window.UilemWater.hasManualWater(40))return toast('Не хватает воды. Проверь запас в системе водоснабжения или возьми воду из колодца позже.');const who=person();if(!charge(who,.5,0,1))return;if(window.UilemWater&&!window.UilemWater.takeManualWater(40))return toast('Не удалось получить воду из системы.');
  p.moisture=Math.min(100,p.moisture+42);p.health=Math.min(100,p.health+2);
  addLog('Полив: '+species(p.species).name+' · '+zoneName(p.zone)+'.');
  updateScreen();toast('Влажность почвы восстановлена.');
@@ -123,6 +123,9 @@ function seasonalState(p,s){
 }
 function dailyTick(){
  ensure();
+ const tickDate=dateStamp();
+ if(G.garden.lastProcessedDay===tickDate)return;
+ G.garden.lastProcessedDay=tickDate;
  let transitions=[];
  const season=seasonIndex(),weather=Array.isArray(G.weather)?String(G.weather[1]||''):'';
  const temp=Array.isArray(G.weather)?Number(G.weather[2]):0;
@@ -191,6 +194,7 @@ if(typeof oldNextMonth==='function'&&!window.__uilemEcologyNextMonthWrapped){
    G.day=originalDay;
   }
   oldNextMonth();
+  dailyTick();
   if(G.tab==='livingPlants')render();
  };
 }
@@ -201,8 +205,7 @@ if(typeof oldAdvance==='function'&&!window.__uilemEcologyAdvanceWrapped){
   const beforeYear=Number(G.year)||1,beforeMonth=Number(G.month)||1,beforeDay=Number(G.day)||1;
   insideAdvance=true;
   try{oldAdvance();}finally{insideAdvance=false;}
-  const sameMonth=(Number(G.year)||1)===beforeYear&&(Number(G.month)||1)===beforeMonth;
-  if(sameMonth&&Number(G.day)!==beforeDay){dailyTick();save();if(G.tab==='livingPlants')render();}
+  if(dateStamp()!==[beforeDay,beforeMonth,beforeYear].join('.')){dailyTick();save();if(G.tab==='livingPlants')render();}
  };
 }
 window.UilemEcology={catalog:CATALOG,render,dailyTick,plant,water,feed,prune,harvest,remove:removePlant};
