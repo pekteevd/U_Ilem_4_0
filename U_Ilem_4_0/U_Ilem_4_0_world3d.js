@@ -38,6 +38,7 @@ function hex(h){const n=parseInt(h.slice(1),16);return [(n>>16&255)/255,(n>>8&25
 function shade(c,k){return c.map(v=>clamp(v*k,0,1));}
 function install(){
  const scene=$('scene'); if(!scene)return;
+ const legacyTools=$('plotControls'); if(legacyTools)legacyTools.remove();
  scene.classList.add('uilem-world');
  const img=scene.querySelector('img');
  if(img){img.src='/U_Ilem_4_0_visual_base.png';img.alt='Утверждённая основная карта У Илем';img.style.animation='none';}
@@ -61,7 +62,7 @@ function install(){
  const pLoc=gl.getAttribLocation(program,'p'),cLoc=gl.getAttribLocation(program,'c');
  const pBuf=gl.createBuffer(),cBuf=gl.createBuffer();
  let W=1,H=1,mode='select',selected=null,drag=null,meshes=[];
- function project(x,y,z){return [x-y*.0, y*.48-z*.95];}
+ function project(x,y,z){return [x, y-z*.95];}
  function screen(x,y,z){const p=project(x,y,z);return [(p[0]/W)*2-1,1-(p[1]/H)*2];}
  function pushTri(out,a,b,c,color){const n=hex(color);[a,b,c].forEach(v=>{const q=screen(v[0],v[1],v[2]);out.pos.push(q[0],q[1]);out.col.push(n[0],n[1],n[2],1);});}
  function quad(out,a,b,c,d,color){pushTri(out,a,b,c,color);pushTri(out,a,c,d,color);}
@@ -136,7 +137,7 @@ function install(){
  canvas.addEventListener('pointermove',e=>{if(!drag)return;const r=canvas.getBoundingClientRect(),o=G.mapObjects.find(x=>String(x.id)===String(drag.id));if(!o)return;o.x=clamp((e.clientX-r.left)/W,.02,.98);o.y=clamp((e.clientY-r.top)/H,.02,.98);draw();});
  canvas.addEventListener('pointerup',()=>{if(drag){drag=null;save();}});
  canvas.addEventListener('pointercancel',()=>{drag=null;});
- tools.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;if(mode==='place'&&typeof window.toast==='function')window.toast('Выбери свободное место на карте для размещения 3D-объекта.');}));
+ tools.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.action){const o=G.mapObjects.find(x=>String(x.id)===String(selected));if(!o){if(typeof window.toast==='function')window.toast('Сначала выбери объект на карте.');return;}if(b.dataset.action==='rotate')o.rotation=(Number(o.rotation)||0)+15;if(b.dataset.action==='scaleUp')o.scale=clamp((Number(o.scale)||1)+.1,.4,2.5);if(b.dataset.action==='scaleDown')o.scale=clamp((Number(o.scale)||1)-.1,.4,2.5);save();draw();return;}mode=b.dataset.mode;if(mode==='place'&&typeof window.toast==='function')window.toast('Выбери свободное место на карте для размещения 3D-объекта.');}));
  window.addEventListener('resize',draw);
  const oldRender=window.render;
  if(typeof oldRender==='function'&&!oldRender.__uilem3d){const wrapped=function(){oldRender.apply(this,arguments);draw();};wrapped.__uilem3d=true;window.render=wrapped;}
