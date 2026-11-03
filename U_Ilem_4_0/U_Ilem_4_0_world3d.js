@@ -35,6 +35,7 @@ function ensureData(){
  G.mapObjects.forEach(o=>{o.x=clamp(Number(o.x),.02,.98);o.y=clamp(Number(o.y),.02,.98);o.rotation=Number(o.rotation)||0;o.scale=clamp(Number(o.scale)||1,.4,2.5);});
 }
 function normalizeType(t){return TYPES[t]?t:({guest:'house',workshop:'shed'}[t]||'shed');}
+const num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
 function clamp(v,a,b){return Math.max(a,Math.min(b,Number.isFinite(v)?v:a));}
 function hex(h){const n=parseInt(h.slice(1),16);return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255];}
 function shade(c,k){return c.map(v=>clamp(v*k,0,1));}
