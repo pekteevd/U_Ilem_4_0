@@ -23,7 +23,7 @@ vm.runInNewContext(source,context,{filename:'U_Ilem_4_0_ollama.js'});
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 (async()=>{
  let checks=0;
- function test(name,fn){try{fn();checks++;process.stdout.write('PASS '+checks+' - '+name+'\n');}catch(e){process.stderr.write('FAIL - '+name+': '+e.message+'\n');process.exitCode=1;}}
+ async function test(name,fn){try{await fn();checks++;process.stdout.write('PASS '+checks+' - '+name+'\n');}catch(e){process.stderr.write('FAIL - '+name+': '+e.message+'\n');process.exitCode=1;}}
  await wait(0);
  await test('Ollama status check is registered',()=>assert.equal(typeof window.UilemOllama.checkStatus,'function'));
  await test('health endpoint confirms installed model',()=>{const s=window.UilemOllama.getStatus();assert.equal(s.online,true);assert.equal(s.modelInstalled,true);});
