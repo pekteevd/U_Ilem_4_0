@@ -7,7 +7,10 @@ const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, 'U_Ilem_4_0_repairs.js'), 'utf8');
 function createHarness(){
   const G={day:4,month:5,year:1,selected:'mainHouse',objects:{mainHouse:{name:'Родительский дом'},bath:{name:'Баня'}},tasks:[],stages:[],inventory:[],people:[],calendar:{monthlyTasks:[]}};
-  const elements={};
+  const elements={},handlers={};
+  const layer={getBoundingClientRect(){return {left:10,top:20,width:200,height:100};}};
+  const scene={addEventListener(name,fn){handlers[name]=fn;},querySelector(){return layer;}};
+  elements.scene=scene;
   const document={
     getElementById(id){return elements[id]||null;},
     querySelector(){return null;},
@@ -17,10 +20,10 @@ function createHarness(){
     documentElement:{appendChild(){}}
   };
   let modalHtml='',toastText='';
-  const window={renderWorkspace(){},renderObject(){},openTaskReview(){modalHtml='task review';}};
+  const window={renderWorkspace(){},renderObject(){},openTaskReview(){modalHtml='task review';},addBuildingAt(...args){G.lastBuildingPlacement=args;G.plotSelection=null;}};
   const sandbox={window,document,G,save(){},toast(s){toastText=s;},modal(s){modalHtml=s;},renderStats(){},renderLiveTasks(){},renderWorkspace(){},render(){},closeModal(){},money:n=>String(n),log(){},confirm(){return true;},prompt(){return null;}};
   vm.runInNewContext(source,sandbox,{filename:'U_Ilem_4_0_repairs.js'});
-  return {G,window,modal:()=>modalHtml,toast:()=>toastText};
+  return {G,window,handlers,modal:()=>modalHtml,toast:()=>toastText};
 }
 {
   const h=createHarness(),api=h.window.UilemRepairs;
@@ -48,5 +51,16 @@ function createHarness(){
   const h=createHarness();
   h.window.openTaskReview(999999);
   assert.match(h.toast(),/Задача не найдена/,'missing task ID must not crash task review');
+}
+{
+  const h=createHarness();
+  const marker={dataset:{object:'bath'}};
+  const markerEvent={target:{closest(selector){return selector==='#scene .hotspot'?marker:null;}},preventDefault(){},stopPropagation(){},stopImmediatePropagation(){}};
+  h.handlers.click(markerEvent);
+  assert.equal(h.G.selected,'bath','clicking a map marker selects its object');
+  h.G.plotSelection={plot:2,type:'bath'};
+  const placementEvent={target:{closest(){return null;}},clientX:110,clientY:70,preventDefault(){},stopPropagation(){},stopImmediatePropagation(){}};
+  h.handlers.click(placementEvent);
+  assert.deepEqual(h.G.lastBuildingPlacement,[2,'bath',50,50],'map placement uses transformed camera-layer coordinates');
 }
 console.log('U_Ilem_4_0_repairs: all tests passed');
