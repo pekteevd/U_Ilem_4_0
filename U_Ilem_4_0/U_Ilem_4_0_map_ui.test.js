@@ -14,7 +14,8 @@ const elements={
  ilemNewStageTitle:{value:'Покрасить дверь'},
  ilemNewStageHours:{value:'5'},
  ilemNewStageCost:{value:'1200'},
- ilemNewStageSkill:{value:'2'}
+ ilemNewStageSkill:{value:'2'},
+ ilemNewStageMaterials:{value:'Доска: 2\nКраска: 1'}
 };
 const document={
  getElementById(id){return elements[id]||null;},
@@ -66,7 +67,7 @@ test('saving a new stage stores the selected object id',()=>{
  const id=window.ilemSaveNewStage('mainHouse');
  const s=G.stages.find(x=>x.id===id);
  assert.ok(s);assert.equal(s.object,'mainHouse');assert.equal(s.title,'Покрасить дверь');
- assert.equal(s.hours,5);assert.equal(s.cost,1200);assert.equal(s.skill,2);
+ assert.equal(s.hours,5);assert.equal(s.cost,1200);assert.equal(s.skill,2);assert.deepEqual(s.need.map(x=>Array.from(x)),[['Доска',2],['Краска',1]]);
 });
 test('object work filter excludes other buildings',()=>{
  window.ilemShowObjectWorks('mainHouse');
