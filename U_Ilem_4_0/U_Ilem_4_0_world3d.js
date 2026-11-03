@@ -135,7 +135,7 @@ function install(){
   const rect=scene.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
   W=rect.width;H=rect.height;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);gl.viewport(0,0,canvas.width,canvas.height);
   gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
-  const out={pos:[],col:[]};meshes=[];
+  const out={pos:[],col:[]};meshes=[];const unit=Math.min(W,H)/120;
   G.mapObjects.forEach((o,i)=>{const t=TYPES[normalizeType(o.type)]||TYPES.shed;buildObject(out,o,i);meshes.push({id:o.id,x:o.x*W,y:o.y*H,r:Math.max(t.w,t.d)*unit*1.25+12});});
   gl.useProgram(program);gl.bindBuffer(gl.ARRAY_BUFFER,pBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(out.pos),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(pLoc);gl.vertexAttribPointer(pLoc,2,gl.FLOAT,false,0,0);
   gl.bindBuffer(gl.ARRAY_BUFFER,cBuf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(out.col),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(cLoc);gl.vertexAttribPointer(cLoc,4,gl.FLOAT,false,0,0);
