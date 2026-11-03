@@ -32,12 +32,10 @@ const G = {
     {id:7,name:'Шуруповёрт',unit:'шт',qty:1,price:6500,cat:'tools',reserved:0,used:0}
   ],
   people:[{id:'a',name:'Алексей',skill:3,hours:16,energy:90}],
-  objects:{mainHouse:{name:'Родительский дом'}},
-  interiorPlans:{mainHouse:{width:6,height:4,stock:[],nextId:1,history:[]}}
+  objects:{mainHouse:{name:'Родительский дом'}}
 };
 const window = {
-  render(){},renderWorkspace(){},renderScene(){},
-  UilemInteriors:{receiveCraftedFurniture(type,buildingId,name){const p=G.interiorPlans[buildingId];if(!p)return false;p.stock.push({id:p.nextId++,type,name});return true;}}
+  render(){},renderWorkspace(){},renderScene(){}
 };
 let saves=0, messages=[];
 const context={G,window,document,save(){saves++;},toast(t){messages.push(t);},log(){},setTab(t){G.tab=t;window.renderWorkspace();},Math,Number,String,Array,Object,Date,JSON,Infinity,NaN};
@@ -55,10 +53,10 @@ test('chair recipe consumes exact inputs and records output',()=>{
  assert.equal(G.cash,before-120);assert.equal(G.people[0].hours,14);
  assert.equal(G.production.stock.length,1);assert.equal(G.production.totalCrafted,1);
 });
-test('interior furniture transfers to selected building stock',()=>{
- const g=G.production.stock[0];assert.equal(P.transferToInterior(g.id,'mainHouse'),true);
- assert.equal(G.production.stock.length,0);assert.equal(G.interiorPlans.mainHouse.stock.length,1);
- assert.equal(G.interiorPlans.mainHouse.stock[0].type,'chair');
+test('interior furniture remains in workshop stock without room editor',()=>{
+ const g=G.production.stock[0];assert.ok(g);assert.equal(P.startPlacement(g.id),false);
+ assert.ok(G.production.stock.some(x=>x.id===g.id));
+ assert.equal(typeof P.transferToInterior,'undefined');
 });
 test('insufficient materials do not partially deduct inputs',()=>{
  G.inventory.find(x=>x.name==='Доска').qty=0;
@@ -99,16 +97,11 @@ test('lighting and workshop placement modes do not overlap',()=>{
  P.cancelPlacement();
 });
 test('history and save hooks are used',()=>{assert.ok(G.production.history.length>=4);assert.ok(saves>=5);});
-test('new building accepts furniture only after construction completion',()=>{
- G.interiorPlans.newBuilding={width:6,height:4,stock:[],nextId:1,history:[]};
- G.constructionProjects={newBuilding:{status:'Строительство · 2/4'}};
- const good=G.production.stock.find(x=>x.recipeId==='chair');
- assert.ok(good);
- assert.equal(P.transferToInterior(good.id,'newBuilding'),false);
- assert.ok(G.production.stock.some(x=>x.id===good.id));
- G.constructionProjects.newBuilding.status='Готово';
- assert.equal(P.transferToInterior(good.id,'newBuilding'),true);
- assert.equal(G.interiorPlans.newBuilding.stock[0].type,'chair');
+test('production interface no longer exposes room-editor controls',()=>{
+ G.tab='production';P.render();
+ assert.equal(workspace.innerHTML.includes('Передать в интерьер'),false);
+ assert.equal(workspace.innerHTML.includes('u4p-building'),false);
+ assert.equal(workspace.innerHTML.includes('редакторе планировки'),false);
 });
 if(process.exitCode)process.exit(process.exitCode);
 process.stdout.write('Production system: '+checks+'/12 checks passed. Saves: '+saves+'.\n');
