@@ -1,0 +1,61 @@
+name: Inspect 4.0 base scripts
+on:
+  push:
+    branches:
+      - fix/audit-2026-11-03
+    paths:
+      - .github/workflows/audit-uilem4-base.yml
+      - U_Ilem_4_0/U_Ilem_4_0_base.html
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/audit-2026-11-03
+          fetch-depth: 0
+      - name: Extract inline scripts into reviewable chunks
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const html = fs.readFileSync('U_Ilem_4_0/U_Ilem_4_0_base.html', 'utf8');
+          const dir = 'U_Ilem_4_0/.audit_extract';
+          fs.rmSync(dir, { recursive: true, force: true });
+          fs.mkdirSync(dir, { recursive: true });
+          const scripts = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script\\s*>/gi)]
+            .filter(m => !/\\bsrc\\s*=/.test(m[1]));
+          const manifest = [];
+          let index = 0;
+          for (const match of scripts) {
+            const body = match[2];
+            if (!body.trim()) continue;
+            index++;
+            const bytes = Buffer.from(body, 'utf8');
+            const parts = [];
+            let start = 0;
+            let part = 0;
+            while (start < bytes.length) {
+              let end = Math.min(start + 70000, bytes.length);
+              while (end < bytes.length && (bytes[end] & 0xc0) === 0x80) end--;
+              if (end <= start) end = Math.min(start + 70000, bytes.length);
+              const name = 'script-' + String(index).padStart(2,'0') + '-part-' + String(++part).padStart(2,'0') + '.js.txt';
+              fs.writeFileSync(path.join(dir, name), bytes.subarray(start, end));
+              parts.push(name);
+              start = end;
+            }
+            manifest.push({ index, bytes: bytes.length, parts });
+          }
+          fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify({
+            htmlBytes: Buffer.byteLength(html), inlineScriptCount: scripts.length, scripts: manifest
+          }, null, 2));
+          console.log('Extracted', manifest.length, 'inline scripts from base HTML.');
+          NODE
+      - name: Commit extracted source for review
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add U_Ilem_4_0/.audit_extract
+          git diff --cached --quiet || (git commit -m "Add temporary base-script audit extract" && git push origin HEAD:fix/audit-2026-11-03)
