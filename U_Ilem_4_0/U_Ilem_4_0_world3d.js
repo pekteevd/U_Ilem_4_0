@@ -87,10 +87,11 @@ function install(){
  }
  function tree(out,x,y,z,s){
   box(out,x,y,z,.55*s,.55*s,2.3*s,['#765034','#68452f','#5b3c29','#79583c','#8a6542'],0);
+  const season=Math.floor((Number(G.month||1)-1)/3),foliage=season===3?'#a66b39':season===0?'#6f8066':'#557b48';
   const levels=3;
   for(let k=0;k<levels;k++){const h=2.0*s+k*1.1*s,rad=(2.1-k*.42)*s,base=z+1.8*s+k*.9*s;
    const pts=[[x-rad,y-rad,base],[x+rad,y-rad,base],[x+rad,y+rad,base],[x-rad,y+rad,base]],tip=[x,y,base+h];
-   pushTri(out,pts[0],pts[1],tip,k===0?'#42683b':'#527b46');pushTri(out,pts[1],pts[2],tip,'#3c6037');pushTri(out,pts[2],pts[3],tip,'#4c7542');pushTri(out,pts[3],pts[0],tip,'#62874e');
+   pushTri(out,pts[0],pts[1],tip,k===0?foliage:'#527b46');pushTri(out,pts[1],pts[2],tip,season===3?'#8c5934':'#3c6037');pushTri(out,pts[2],pts[3],tip,season===3?'#b17a43':'#4c7542');pushTri(out,pts[3],pts[0],tip,season===3?'#c18b4f':'#62874e');
   }
  }
  function shadow(out,x,y,rx,ry){const center=[x,y,0],steps=12;for(let i=0;i<steps;i++){const a=i*Math.PI*2/steps,b=(i+1)*Math.PI*2/steps;pushTri(out,center,[x+Math.cos(a)*rx,y+Math.sin(a)*ry,0],[x+Math.cos(b)*rx,y+Math.sin(b)*ry,0],'#514a3d',.22);}}
@@ -126,7 +127,7 @@ function install(){
   const placed=G.production&&Array.isArray(G.production.placed)?G.production.placed:[];
   placed.forEach(p=>{const id='production_'+p.id;let o=G.mapObjects.find(x=>String(x.id)===id);if(!o){o={id,name:p.name||'Изделие мастерской',type:p.recipeId==='gardenTable'?'table':'bench',x:clamp(num(p.x)/100,.02,.98),y:clamp(num(p.y)/100,.02,.98),rotation:0,scale:1,source:'production'};G.mapObjects.push(o);}else{o.x=clamp(num(p.x)/100,.02,.98);o.y=clamp(num(p.y)/100,.02,.98);o.name=p.name||o.name;}});
   const plants=G.garden&&Array.isArray(G.garden.livingPlants)?G.garden.livingPlants:[];const activePlantIds=new Set();
-  plants.filter(p=>p&&p.status!=='Удалено'&&p.mapX!==null&&p.mapX!==undefined&&p.mapY!==null&&p.mapY!==undefined).forEach(p=>{const id='plant_'+p.id;activePlantIds.add(id);let o=G.mapObjects.find(x=>String(x.id)===id);if(!o){o={id,name:p.name||p.species||'Растение',type:'tree',x:clamp(num(p.mapX)/100,.02,.98),y:clamp(num(p.mapY)/100,.02,.98),rotation:0,scale:.72,source:'ecology'};G.mapObjects.push(o);}else{o.x=clamp(num(p.mapX)/100,.02,.98);o.y=clamp(num(p.mapY)/100,.02,.98);}});
+  plants.filter(p=>p&&p.status!=='Удалено'&&p.mapX!==null&&p.mapX!==undefined&&p.mapY!==null&&p.mapY!==undefined).forEach(p=>{const id='plant_'+p.id;activePlantIds.add(id);let o=G.mapObjects.find(x=>String(x.id)===id);if(!o){o={id,name:p.name||p.species||'Растение',type:'tree',x:clamp(num(p.mapX)/100,.02,.98),y:clamp(num(p.mapY)/100,.02,.98),rotation:0,scale:.72,source:'ecology'};G.mapObjects.push(o);}else{o.x=clamp(num(p.mapX)/100,.02,.98);o.y=clamp(num(p.mapY)/100,.02,.98);o.scale=clamp(.35+num(p.growth)/100*.8,.35,1.15);}});
   G.mapObjects=G.mapObjects.filter(o=>o.source!=='ecology'||activePlantIds.has(String(o.id)));
  }
  function draw(){
