@@ -134,7 +134,8 @@ function openTaskReview(id){
  '<label class="field">Название<input id="ilemTaskTitle" value="'+h(t.title||'')+'"></label>'+
  '<label class="field">Описание<textarea id="ilemTaskDescription" rows="3">'+h(t.description||t.notes||'')+'</textarea></label>'+
  '<div class="grid2"><label class="field">Объект<select id="ilemTaskObject"><option value="">Без привязки</option>'+objects+'</select></label>'+
- '<label class="field">Исполнитель<select id="ilemTaskPerson">'+people+'</select></label>'+\n '<label class="field">Ответственный<select id="ilemTaskResponsible">'+responsibles+'</select></label>'+
+ '<label class="field">Исполнитель<select id="ilemTaskPerson">'+people+'</select></label>'+
+ '<label class="field">Ответственный<select id="ilemTaskResponsible">'+responsibles+'</select></label>'+
  '<label class="field">Срок<input id="ilemTaskDue" type="text" placeholder="день.месяц.год" value="'+h(dateValue)+'"></label>'+
  '<label class="field">Приоритет<select id="ilemTaskPriority">'+['Низкий','Плановый','Высокий','Срочный'].map(x=>'<option'+(String(t.priority||'Плановый')===x?' selected':'')+'>'+x+'</option>').join('')+'</select></label>'+
  '<label class="field">Статус<select id="ilemTaskStatus">'+statusHtml+'</select></label>'+
