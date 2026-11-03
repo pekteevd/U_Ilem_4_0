@@ -141,7 +141,7 @@ async function handler(req, res) {
       'Referrer-Policy': 'no-referrer'
     });
     if (req.method === 'HEAD') {
-      res.setHeader('Content-Length', stat.size + (isMainGame ? 39 : 0));
+      if (!isMainGame) res.setHeader('Content-Length', stat.size);
       return res.end();
     }
     if (isMainGame) {
