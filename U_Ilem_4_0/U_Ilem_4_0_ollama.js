@@ -48,7 +48,7 @@ window.sendCommand=async function(){
   const history=arr('chat').slice(-18).map(m=>({role:m.who==='Дмитрий'?'user':'assistant',content:String(m.text||'')}));
   const raw=await ask([{role:'system',content:system}].concat(history)),plan=parsePlan(raw),reply=String(plan.reply||raw).trim();
   if(reply&&typeof addChat==='function')addChat('У Илем',reply,'assistant');
-  const n=createDrafts(plan.tasks);if(n&&typeof addChat==='function')addChat('У Илем','Подготовил '+n+' черновиков. Они появились на общей доске со статусом «На согласовании». Проверь их перед утверждением.','system');
+  const n=createDrafts(plan.tasks);if(n&&typeof addChat==='function')addChat('У Илем','Создано черновиков: '+n+'. Они появились на общей доске со статусом «На согласовании». Проверь их перед утверждением.','system');
   if(typeof save==='function')save();if(typeof renderLiveTasks==='function')renderLiveTasks();if(typeof renderStats==='function')renderStats();status('Ollama подключена · '+h.model+' · ответ получен',true);
  }catch(e){const msg=e&&e.name==='AbortError'?'Истекло время ожидания ответа модели.':e&&e.message||'Неизвестная ошибка.';if(typeof addChat==='function')addChat('У Илем','Не удалось получить ответ локальной модели: '+msg,'system');status('Ollama недоступна · '+msg,false);}
  finally{input.disabled=false;input.focus();}
