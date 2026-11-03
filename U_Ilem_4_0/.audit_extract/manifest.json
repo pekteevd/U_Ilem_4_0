@@ -1,0 +1,34 @@
+{
+  "htmlBytes": 5159407,
+  "inlineScriptCount": 4,
+  "scripts": [
+    {
+      "index": 1,
+      "bytes": 43215,
+      "parts": [
+        "script-01-part-01.js.txt"
+      ]
+    },
+    {
+      "index": 2,
+      "bytes": 9905,
+      "parts": [
+        "script-02-part-01.js.txt"
+      ]
+    },
+    {
+      "index": 3,
+      "bytes": 30934,
+      "parts": [
+        "script-03-part-01.js.txt"
+      ]
+    },
+    {
+      "index": 4,
+      "bytes": 15604,
+      "parts": [
+        "script-04-part-01.js.txt"
+      ]
+    }
+  ]
+}
