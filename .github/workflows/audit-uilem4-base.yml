@@ -90,7 +90,7 @@ jobs:
           const approved = fs.readFileSync('U_Ilem_3_0_APPROVED_MAP.html', 'utf8');
           const crypto = require('node:crypto');
           function imageStats(source) {
-            const matches = [...source.matchAll(/data:image\\/([a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)/g)];
+            const matches = [...source.matchAll(/data:image\/([a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)/g)];
             return matches.map((m, i) => {
               const bytes = Buffer.from(m[2], 'base64');
               return { index: i + 1, mime: m[1], bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
