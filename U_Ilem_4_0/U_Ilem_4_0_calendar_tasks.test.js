@@ -56,11 +56,11 @@ test('legacy calendar entries migrate once into shared tasks',()=>{
 });
 test('custom task form and save create one shared task',()=>{
  window.ilemCreateCalendarTask();assert.ok(elements.modalHtml.includes('ilemNewTaskTitle'));
- elements.ilemNewTaskTitle={value:'Покрасить входную дверь'};elements.ilemNewTaskDescription={value:'Подготовить и покрасить'};elements.ilemNewTaskPerson={value:'Дмитрий'};elements.ilemNewTaskObject={value:'mainHouse'};elements.ilemNewTaskDue={value:'12.05.2'};elements.ilemNewTaskPriority={value:'Высокий'};elements.ilemNewTaskHours={value:'3'};elements.ilemNewTaskStage={value:''};elements.ilemNewTaskResources={value:'Краска: 1'};
- const id=window.ilemSaveNewTask();const t=G.tasks.find(x=>x.id===id);assert.ok(t);assert.equal(t.object,'mainHouse');assert.equal(t.resources[0].name,'Краска');assert.equal(t.hours,3);
+ elements.ilemNewTaskTitle={value:'Покрасить входную дверь'};elements.ilemNewTaskDescription={value:'Подготовить и покрасить'};elements.ilemNewTaskPerson={value:'Дмитрий'};elements.ilemNewTaskResponsible={value:'Дмитрий'};elements.ilemNewTaskObject={value:'mainHouse'};elements.ilemNewTaskDue={value:'12.05.2'};elements.ilemNewTaskPriority={value:'Высокий'};elements.ilemNewTaskHours={value:'3'};elements.ilemNewTaskStage={value:''};elements.ilemNewTaskResources={value:'Краска: 1'};
+ const id=window.ilemSaveNewTask();const t=G.tasks.find(x=>x.id===id);assert.ok(t);assert.equal(t.object,'mainHouse');assert.equal(t.responsible,'Дмитрий');assert.equal(t.resources[0].name,'Краска');assert.equal(t.hours,3);
 });
 test('task review opens with materials and stage controls',()=>{
- const t=G.tasks[0];assert.equal(window.openTaskReview(t.id),true);assert.ok(elements.modalHtml.includes('ilemTaskResources'));assert.ok(elements.modalHtml.includes('ilemTaskStage'));
+ const t=G.tasks[0];assert.equal(window.openTaskReview(t.id),true);assert.ok(elements.modalHtml.includes('ilemTaskResources'));assert.ok(elements.modalHtml.includes('ilemTaskStage'));assert.ok(elements.modalHtml.includes('ilemTaskResponsible'));
 });
 test('task purchase fills missing stock in one transaction',()=>{
  const t=G.tasks.find(x=>x.title==='Покрасить входную дверь');assert.equal(window.ilemTaskPurchase(t.id),true);assert.ok(elements.modalHtml.includes('Закупить недостающее')===false);assert.equal(window.ilemConfirmTaskPurchase(t.id),true);assert.equal(G.inventory[0].qty,1);assert.equal(G.cash,9500);
