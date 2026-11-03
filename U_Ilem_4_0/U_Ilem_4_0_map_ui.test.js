@@ -81,7 +81,7 @@ test('top-level build navigation clears object-only filter',()=>{
  assert.ok(workspaceCalls>0);
 });
 test('object detail all-works button is redirected to object filter',()=>{
- G.selected='mainHouse';window.renderObject();
+ G.selected='mainHouse';window.renderObject();assert.ok(elements.objectDetail.innerHTML.includes('Связанные задачи'));
  buttons[1].onclick({preventDefault(){}});
  assert.equal(G.objectTasksFilter,'mainHouse');
  assert.ok(elements.workspace.innerHTML.includes('Починить крыльцо'));
