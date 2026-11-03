@@ -30,3 +30,4 @@ jobs:
           node U_Ilem_4_0_ecology.test.js
           node U_Ilem_4_0_construction.test.js
           node U_Ilem_4_0_server.test.js
+          node U_Ilem_4_0_world3d.test.js
