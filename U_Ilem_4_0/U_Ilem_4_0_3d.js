@@ -111,7 +111,7 @@ async function init(){
    window.addEventListener('resize',resize);
    bindControls(renderer.domElement);
    statusText('Геометрия построена · вращай мышью, колесо меняет масштаб');
-  }catch(e){statusText('Не удалось загрузить Three.js: '+(e.message||e));throw e;}
+  }catch(e){statusText('Не удалось загрузить Three.js: '+(e.message||e));loading=null;throw e;}
  })();return loading;
 }
 function disposeWorld(){
@@ -124,10 +124,10 @@ function resize(){
  const w=host.clientWidth||1,h=host.clientHeight||1;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);
 }
 function bindControls(canvas){
- let down=false,lastX=0,lastY=0;
- canvas.addEventListener('pointerdown',e=>{down=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);});
- canvas.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;azimuth-=dx*.006;elevation=clamp(elevation+dy*.005,.18,1.35);updateCamera();});
- canvas.addEventListener('pointerup',e=>{if(!down)return;down=false;pick(e,canvas);});
+ let down=false,lastX=0,lastY=0,moved=false;
+ canvas.addEventListener('pointerdown',e=>{down=true;moved=false;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);});
+ canvas.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;if(Math.abs(dx)+Math.abs(dy)>3)moved=true;lastX=e.clientX;lastY=e.clientY;azimuth-=dx*.006;elevation=clamp(elevation+dy*.005,.18,1.35);updateCamera();});
+ canvas.addEventListener('pointerup',e=>{if(!down)return;down=false;if(!moved)pick(e,canvas);});
  canvas.addEventListener('pointercancel',()=>down=false);
  canvas.addEventListener('wheel',e=>{e.preventDefault();distance=clamp(distance+e.deltaY*.08,45,180);updateCamera();},{passive:false});
 }
