@@ -117,7 +117,7 @@ export class WorldRenderer{
     this.canvas.addEventListener("pointermove",e=>{
       if(!this.drag)return;const dx=e.clientX-this.drag.px,dy=e.clientY-this.drag.py;
       if(Math.abs(e.clientX-this.drag.x)+Math.abs(e.clientY-this.drag.y)>4)this.drag.moved=true;
-      if(this.drag.moved){const units=this.camera.top-this.camera.bottom;const scale=units/this.canvas.clientHeight;this.target.x-=dx*scale;this.target.z+=dy*scale;this.camera.position.set(this.target.x,100/this.camera.zoom,this.target.z);this.camera.lookAt(this.target);}
+      if(this.drag.moved){const units=(this.camera.top-this.camera.bottom)/this.camera.zoom;const scale=units/this.canvas.clientHeight;this.target.x-=dx*scale;this.target.z+=dy*scale;this.camera.position.set(this.target.x,100/this.camera.zoom,this.target.z);this.camera.lookAt(this.target);}
       this.drag.px=e.clientX;this.drag.py=e.clientY;
     });
     this.canvas.addEventListener("pointerup",e=>{if(this.drag&&!this.drag.moved)this.pick(e);this.drag=null;});
