@@ -1,0 +1,30 @@
+name: Build U Ilem 5.0 ZIP
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-u-ilem-5-0.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Package only U_Ilem_5_0
+        run: |
+          test -d U_Ilem_5_0
+          zip -r U_Ilem_5_0.zip U_Ilem_5_0
+          unzip -t U_Ilem_5_0.zip
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: U_Ilem_5_0
+          path: U_Ilem_5_0.zip
+          if-no-files-found: error
+          retention-days: 7
