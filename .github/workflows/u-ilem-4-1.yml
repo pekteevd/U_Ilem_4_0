@@ -22,17 +22,17 @@ jobs:
           node --check core/work-items.js
           node tests/check-inline.js
       - name: Work registry tests
-        run: |
-          cd U_Ilem_4_1
-          node tests/work-items.test.js
-      - name: Game module tests
-        run: |
-          cd U_Ilem_4_1
-          node U_Ilem_4_1_interiors.test.js
-          node U_Ilem_4_1_water.test.js
-          node U_Ilem_4_1_production.test.js
-          node U_Ilem_4_1_ecology.test.js
-          node U_Ilem_4_1_construction.test.js
+        run: cd U_Ilem_4_1 && node tests/work-items.test.js
+      - name: Interiors tests
+        run: cd U_Ilem_4_1 && node U_Ilem_4_1_interiors.test.js
+      - name: Water tests
+        run: cd U_Ilem_4_1 && node U_Ilem_4_1_water.test.js
+      - name: Production tests
+        run: cd U_Ilem_4_1 && node U_Ilem_4_1_production.test.js
+      - name: Ecology tests
+        run: cd U_Ilem_4_1 && node U_Ilem_4_1_ecology.test.js
+      - name: Construction tests
+        run: cd U_Ilem_4_1 && node U_Ilem_4_1_construction.test.js
       - name: Package complete game
         run: zip -qr U_Ilem_4_1.zip U_Ilem_4_1
       - uses: actions/upload-artifact@v4
