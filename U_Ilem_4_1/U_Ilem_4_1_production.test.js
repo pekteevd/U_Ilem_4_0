@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const source = fs.readFileSync(path.join(__dirname, 'U_Ilem_4_0_production.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, 'U_Ilem_4_1_production.js'), 'utf8');
 const elements = {};
 const scene = {
   dataset: {}, classList: { add(){}, remove(){}, toggle(){} },
@@ -41,7 +41,7 @@ const window = {
 };
 let saves=0, messages=[];
 const context={G,window,document,save(){saves++;},toast(t){messages.push(t);},log(){},setTab(t){G.tab=t;window.renderWorkspace();},Math,Number,String,Array,Object,Date,JSON,Infinity,NaN};
-vm.runInNewContext(source,context,{filename:'U_Ilem_4_0_production.js'});
+vm.runInNewContext(source,context,{filename:'U_Ilem_4_1_production.js'});
 const P=window.UilemProduction;
 let checks=0;
 function test(name,fn){try{fn();checks++;process.stdout.write('PASS '+checks+' - '+name+'\n');}catch(error){process.stderr.write('FAIL - '+name+': '+error.message+'\n');process.exitCode=1;}}

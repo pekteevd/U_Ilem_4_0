@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const source = fs.readFileSync(path.join(__dirname, 'U_Ilem_4_0_interiors.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, 'U_Ilem_4_1_interiors.js'), 'utf8');
 const elements = {};
 const workspace = { dataset: {}, innerHTML: '', addEventListener() {} };
 const tabs = { querySelector() { return null; }, appendChild() {} };
@@ -42,7 +42,7 @@ vm.runInNewContext(source, {
   toast(message) { messages.push(String(message)); },
   log(message) { G.log.push(String(message)); },
   console, Math, Number, String, Array, Object, Date, JSON, Infinity, NaN
-}, { filename: 'U_Ilem_4_0_interiors.js' });
+}, { filename: 'U_Ilem_4_1_interiors.js' });
 
 const I = window.UilemInteriors;
 assert.ok(I, 'Interior editor API must be registered');

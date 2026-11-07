@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
-const src=fs.readFileSync(path.join(__dirname,'U_Ilem_4_0_construction.js'),'utf8');
+const src=fs.readFileSync(path.join(__dirname,'U_Ilem_4_1_construction.js'),'utf8');
 const G={cash:500000,day:1,month:5,year:1,selected:'mainHouse',objects:{mainHouse:{name:'Родительский дом',state:35}},buildings:[],tasks:[],stages:[],inventory:['Цемент','Кирпич','Доска','Брус','Крепёж','Кровельный материал','Краска','Пропитка для древесины'].map((name,i)=>({id:i+1,name,unit:'шт',qty:0,price:100,reserved:0}))};
 let saves=0,execCalls=0,placed=[];
 const productionState={stock:[]};

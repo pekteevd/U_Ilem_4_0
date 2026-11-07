@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const source = fs.readFileSync(path.join(__dirname, 'U_Ilem_4_0_ecology.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, 'U_Ilem_4_1_ecology.js'), 'utf8');
 const elements = {};
 const scene = {
   dataset: {},
@@ -53,7 +53,7 @@ const context = {
   weatherRoll() { G.weather = ['☀', 'Ясно', 20]; },
   Math, Number, String, Array, Object, Date, JSON, Infinity, NaN
 };
-vm.runInNewContext(source, context, { filename: 'U_Ilem_4_0_ecology.js' });
+vm.runInNewContext(source, context, { filename: 'U_Ilem_4_1_ecology.js' });
 const E = window.UilemEcology;
 let checks = 0;
 function test(name, fn) {

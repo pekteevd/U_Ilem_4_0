@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const source = fs.readFileSync(path.join(__dirname, 'U_Ilem_4_0_water.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, 'U_Ilem_4_1_water.js'), 'utf8');
 const G = {
   cash: 100000, day: 1, month: 1, year: 1, tab: 'waterSystem',
   lighting: { source: 'grid', tariff: 8 },
@@ -28,7 +28,7 @@ const context = {
   G, window, document, save() { saves++; }, toast() {}, log() {},
   console, Math, Number, String, Array, Object, Date, JSON, Infinity, NaN
 };
-vm.runInNewContext(source, context, { filename: 'U_Ilem_4_0_water.js' });
+vm.runInNewContext(source, context, { filename: 'U_Ilem_4_1_water.js' });
 const W = window.UilemWater;
 let checks = 0;
 function test(name, fn) {
