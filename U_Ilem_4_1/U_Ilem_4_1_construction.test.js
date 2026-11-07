@@ -1,0 +1,27 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const src=fs.readFileSync(path.join(__dirname,'U_Ilem_4_0_construction.js'),'utf8');
+const G={cash:500000,day:1,month:5,year:1,selected:'mainHouse',objects:{mainHouse:{name:'Родительский дом',state:35}},buildings:[],tasks:[],stages:[],inventory:['Цемент','Кирпич','Доска','Брус','Крепёж','Кровельный материал','Краска','Пропитка для древесины'].map((name,i)=>({id:i+1,name,unit:'шт',qty:0,price:100,reserved:0}))};
+let saves=0,execCalls=0,placed=[];
+const productionState={stock:[]};
+const window={render(){},renderLiveTasks(){},renderScene(){},cancelMapPlacement(){G.plotSelection=null;},beginMapPlacement(plot,type){G.plotSelection={plot,type};},UilemProduction:{cancelPlacement(){},getState(){return productionState;},startPlacement(id){this.pending=id;return true;},placeAt(x,y){const item=productionState.stock.find(v=>v.id===this.pending);if(!item)return false;productionState.stock=productionState.stock.filter(v=>v.id!==this.pending);placed.push({type:item.recipeId,x,y});return true;}},UilemEcology:{cancelLocate(){}},executeStage(id){execCalls++;const s=G.stages.find(v=>v.id===id),person=G.people[0];for(const [n,q] of s.need){const it=G.inventory.find(v=>v.name===n);if(!it||it.qty<q)return false;it.qty-=q;}G.cash-=s.cost;person.hours-=s.hours;s.progress=100;G.objects[s.object].state=Math.min(100,(G.objects[s.object].state||0)+25);return true;}};
+const document={getElementById(){return{classList:{remove(){}}};},createElement(){return{id:'',textContent:''};},head:{appendChild(){}},querySelectorAll(){return[];}};
+vm.runInNewContext(src,{G,window,document,save(){saves++;},toast(){},log(){}});
+const C=window.UilemConstruction;let checks=0;
+function test(name,fn){try{fn();checks++;process.stdout.write('PASS '+checks+' '+name+'\n');}catch(e){process.stderr.write('FAIL '+name+': '+e.message+'\n');process.exitCode=1;}}
+test('construction API registered',()=>assert.equal(typeof C.addProject,'function'));
+test('map point creates project and four stages',()=>{const id=window.addBuildingAt(2,'bath',31.4,62.7),b=G.buildings.find(x=>x.id===id);assert.ok(b);assert.equal(b.x,31.4);assert.equal(b.y,62.7);assert.equal(G.constructionProjects[id].stageIds.length,4);assert.equal(G.stages.filter(x=>x.object===id).length,4);assert.equal(G.tasks[0].status,'На согласовании');assert.equal(G.tasks[0].actions.length,4);assert.ok(G.tasks[0].purchases.length>=4);assert.equal(G.plotSelection,null);});
+test('budget includes phases and materials',()=>assert.ok(Object.values(G.constructionProjects)[0].estimatedBudget>16000));
+test('stage blocked before approval',()=>{assert.equal(window.executeStage(G.stages[0].id),false);assert.equal(execCalls,0);});
+test('stage blocked until separate procurement',()=>{G.tasks[0].status='Запланирована';assert.equal(window.executeStage(G.stages[0].id),false);assert.equal(execCalls,0);});
+test('base map placement cancels competing placement modes',()=>{let p=0,e=0;window.UilemProduction.cancelPlacement=()=>p++;window.UilemEcology.cancelLocate=()=>e++;G.lighting={pending:9};window.beginMapPlacement(3,'gazebo');assert.equal(G.lighting.pending,null);assert.equal(p,1);assert.equal(e,1);assert.deepEqual(G.plotSelection,{plot:3,type:'gazebo'});});
+test('four phases finish the object',()=>{const project=Object.values(G.constructionProjects)[0],task=G.tasks[0];task.status='Запланирована';G.inventory.forEach(x=>x.qty=100);G.people=[{name:'Дмитрий',hours:500,energy:100,skill:5}];for(const id of project.stageIds)assert.equal(window.executeStage(id),true);assert.equal(project.completedStages,4);assert.equal(project.status,'Готово');assert.equal(G.objects[project.buildingId].state,100);assert.equal(G.objects[project.buildingId].condition,'Построено · готово к обустройству');assert.equal(task.status,'Выполнена');assert.ok(task.actions.every(x=>x.done));});
+test('bench is placed only from crafted stock',()=>{productionState.stock=[{id:77,recipeId:'bench'}];const n=G.buildings.length;assert.equal(window.addBuildingAt(1,'bench',43,38),true);assert.equal(G.buildings.length,n);assert.deepEqual(placed[0],{type:'bench',x:43,y:38});assert.equal(productionState.stock.length,0);});
+test('garden table is placed from workshop stock',()=>{productionState.stock=[{id:88,recipeId:'gardenTable'}];assert.equal(window.addBuildingAt(1,'table',65,24),true);assert.deepEqual(placed[1],{type:'gardenTable',x:65,y:24});});
+test('uncrafted bench cannot be placed for free',()=>{productionState.stock=[];const n=G.buildings.length;assert.equal(window.addBuildingAt(1,'bench',50,50),false);assert.equal(G.buildings.length,n);});
+test('all supported construction types contain four phases',()=>{for(const type of ['toilet','shower','bath','guest','workshop','shed','greenhouse','gazebo','fire'])assert.equal(C.blueprints[type].phases.length,4);});
+if(process.exitCode)process.exit(process.exitCode);
+process.stdout.write('Construction workflow '+checks+'/11 checks passed. Saves: '+saves+'.\n');

@@ -1,0 +1,42 @@
+name: U Ilem 4.1 build and checks
+on:
+  push:
+    branches: [work/u-ilem-4-1]
+    paths:
+      - 'U_Ilem_4_1/**'
+      - '.github/workflows/u-ilem-4-1.yml'
+  workflow_dispatch:
+jobs:
+  test-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax checks
+        run: |
+          cd U_Ilem_4_1
+          node --check U_Ilem_4_1_server.js
+          node --check ai-bridge.js
+          node --check core/work-items.js
+          node tests/check-inline.js
+      - name: Work registry tests
+        run: |
+          cd U_Ilem_4_1
+          node tests/work-items.test.js
+      - name: Game module tests
+        run: |
+          cd U_Ilem_4_1
+          node U_Ilem_4_1_interiors.test.js
+          node U_Ilem_4_1_water.test.js
+          node U_Ilem_4_1_production.test.js
+          node U_Ilem_4_1_ecology.test.js
+          node U_Ilem_4_1_construction.test.js
+      - name: Package complete game
+        run: zip -qr U_Ilem_4_1.zip U_Ilem_4_1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: U-Ilem-4.1-Windows-test-build
+          path: U_Ilem_4_1.zip
+          if-no-files-found: error

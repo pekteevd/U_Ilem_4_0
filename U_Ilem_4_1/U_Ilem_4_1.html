@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>У Илем 4.1 · запуск</title>
+<link rel="icon" href="/U_Ilem_4_1.ico" type="image/x-icon">
+<style>
+:root{color-scheme:dark;font-family:Georgia,serif}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#17251c;color:#f5ead0}
+main{width:min(560px,calc(100% - 36px));padding:28px;border:1px solid #8e7149;border-radius:18px;background:#27382a;box-shadow:0 14px 40px #0006;text-align:center}
+h1{margin:0 0 8px;font-size:30px}p{color:#d8c7a6;line-height:1.5}
+.spinner{width:26px;height:26px;border:3px solid #6b775b;border-top-color:#e2c17c;border-radius:50%;margin:20px auto;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<main>
+<h1>У Илем <span style="color:#e5bd70">4.1</span></h1>
+<p>Запуск локальной игровой среды…</p>
+<div class="spinner"></div>
+<p>Не закрывай окно локального сервера.</p>
+</main>
+<script>if(location.pathname!=='/__game')location.replace('/__game');</script>
+</body>
+</html>
