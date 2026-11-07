@@ -233,11 +233,11 @@ async function handler(req, res) {
         // The base copy remains untouched. The server assembles the running 4.0 page.
         html = html.replace('<title>У Илем 4.1 | Живая усадьба</title>',
           '<title>У Илем 4.1 | Живая усадьба</title>');
-        html = html.replace('<span style="color:#e5bd70">4.1</span>',
-          '<span style="color:#e5bd70">4.0</span>');
+        html = html.replace('<span style="color:#e5bd70">3.0</span>',
+          '<span style="color:#e5bd70">4.1</span>');
         html = html.replace('href="U_Ilem.ico"', 'href="/U_Ilem_4_1.ico"');
 
-        // A 3.x save is migration input only; version 4.0 writes to uilem4save.
+        // A 3.x/4.0 save is migration input only; version 4.1 writes to uilem4_1save.
         html = html.replace(
           "G=JSON.parse(localStorage.getItem('uilem3save'))||fresh()",
           "G=JSON.parse(localStorage.getItem('uilem4_1save'))||JSON.parse(localStorage.getItem('uilem4save'))||JSON.parse(localStorage.getItem('uilem3save'))||fresh()"
